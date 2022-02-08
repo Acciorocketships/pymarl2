@@ -22,6 +22,7 @@ class Logger:
 
     def setup_sacred(self, sacred_run_dict):
         self.sacred_info = sacred_run_dict.info
+        self._run = sacred_run_dict
         self.use_sacred = True
 
     def log_stat(self, key, value, t, to_sacred=True):
@@ -31,6 +32,7 @@ class Logger:
             self.tb_logger(key, value, t)
 
         if self.use_sacred and to_sacred:
+            self._run.log_scalar(key, value, step=t)
             if key in self.sacred_info:
                 self.sacred_info["{}_T".format(key)].append(t)
                 self.sacred_info[key].append(value)
