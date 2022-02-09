@@ -18,7 +18,6 @@ class GNNwrapper(nn.Module):
 		B, n_agents, _ = X.shape
 		data = to_geometric(A, x=X).to(X.device)
 		output = self.gnn(**self.input_func(data))
-		import pdb; pdb.set_trace()
 
 		return output.reshape(B, n_agents, -1)
 
