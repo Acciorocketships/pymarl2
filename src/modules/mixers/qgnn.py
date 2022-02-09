@@ -45,6 +45,7 @@ class QGNNMixer(nn.Module):
 
 
 	def forward(self, q_values, states):
+		print("mixer")
 		# q_values: batch x episode_len x n_agents
 		# states: batch x episode_len x n_agents x obs_shape
 		# output: batch x episode_len x 1
