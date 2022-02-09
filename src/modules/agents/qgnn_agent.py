@@ -41,7 +41,7 @@ class RNN(nn.Module):
 class QGNNAgent(nn.Module):
 
     def __init__(self, input_shape, args):
-        nn.Module.__init__(self)
+        super().__init__()
         self.hidden_dim = args.rnn_hidden_dim
         self.out_dim = args.n_actions
         self.use_layernorm = getattr(args, "model_use_layernorm", False)
@@ -57,6 +57,9 @@ class QGNNAgent(nn.Module):
 
         # Q Net
         self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(self.hidden_dim+self.out_dim)//2], batchnorm=self.use_layernorm)
+
+        for param in self.parameters():
+            print(param.device)
 
         
 

@@ -14,11 +14,8 @@ class GNNwrapper(nn.Module):
 		self.input_func = input_func
 
 
-	def forward(self, X, A=None):
+	def forward(self, X, A):
 		B, n_agents, _ = X.shape
-		if A is None:
-			A = torch.ones(B, n_agents, n_agents)
-			# A.masked_fill_(torch.eye(n_agents).byte(), 0)
 		data = to_geometric(A, x=X).to(X.device)
 		output = self.gnn(**self.input_func(data))
 

@@ -43,6 +43,9 @@ class QGNNMixer(nn.Module):
 				self.hypernet = AggMixer(input_dim=self.state_dim, hidden_dim=self.state_dim, 
 										 output_dim=self.num_params_mixer, layernorm=self.use_layernorm)
 
+		for param in self.parameters():
+			print(param.device)
+
 
 	def forward(self, q_values, states):
 		# q_values: batch x episode_len x n_agents
