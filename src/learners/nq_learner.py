@@ -125,6 +125,7 @@ class NQLearner:
 
         # Optimise
         self.optimiser.zero_grad()
+        import pdb; pdb.set_trace()
         loss.backward()
         grad_norm = th.nn.utils.clip_grad_norm_(self.params, self.args.grad_norm_clip)
         self.optimiser.step()

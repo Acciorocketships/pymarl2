@@ -53,7 +53,6 @@ def batch_linear(module, params, absweight=False):
 
 
 def abs_linear(module, *args, **kwargs):
-	import pdb; pdb.set_trace()
 	module.weight.data = torch.abs(module.weight.data)
 	return module
 
