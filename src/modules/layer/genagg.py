@@ -73,7 +73,7 @@ def gen_agg(x, p=1, a=0, agg_dim=-2, shift=False, special=True):
 			return Y.type(dtype)
 
 	# number of neighbours
-	N = torch.tensor(x.shape[agg_dim]).float()
+	N = torch.tensor(x.shape[agg_dim], device=x.device).float()
 
 	# when shift is True, p=0 is min, p=1 is avg, p=inf is max
 	if shift:
