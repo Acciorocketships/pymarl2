@@ -58,12 +58,13 @@ class QGNNAgent(nn.Module):
         # Q Net
         self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(self.hidden_dim+self.out_dim)//2], batchnorm=self.use_layernorm)
 
-        for param in self.parameters():
-            print(param.device)
-
         
 
     def forward(self, inputs, hidden_state, adj=None):
+        print("model")
+        for param in self.parameters():
+            print(param.device)
+
         batch, n_agents, obs_dim = inputs.size()
 
         h = self.rnn(inputs, hidden_state)
