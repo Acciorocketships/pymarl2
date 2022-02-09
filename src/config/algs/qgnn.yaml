@@ -19,7 +19,7 @@ target_update_interval: 200
 
 # use the Q_Learner to train
 mac: "n_mac"
-agent: "qgnn"
+agent: "n_rnn"
 agent_output_type: q
 
 learner: "nq_learner"
