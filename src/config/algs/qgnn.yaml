@@ -23,7 +23,7 @@ agent: "qgnn"
 agent_output_type: q
 
 learner: "nq_learner"
-mixer: "qmix"
+mixer: "qgnn"
 lr: 0.001 # Learning rate for agents
 td_lambda: 0.6 # 0.3 for 6h_vs_8z
 optimizer: 'adam'

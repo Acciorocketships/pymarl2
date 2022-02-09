@@ -61,7 +61,6 @@ class QGNNAgent(nn.Module):
 		
 
 	def forward(self, inputs, hidden_state, adj=None):
-		print("model")
 		batch, n_agents, obs_dim = inputs.size()
 
 		h = self.rnn(inputs, hidden_state)

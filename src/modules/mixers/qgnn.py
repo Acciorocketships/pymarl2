@@ -45,23 +45,22 @@ class QGNNMixer(nn.Module):
 
 
 	def forward(self, q_values, states):
-		print("mixer")
 		# q_values: batch x episode_len x n_agents
 		# states: batch x episode_len x n_agents x obs_shape
 		# output: batch x episode_len x 1
 		B, episode_len, n_agents = q_values.shape
-		if self.use_hypernet:
-			if self.hypernet_flat:
-				states = states.reshape(B, episode_len, self.state_dim)
-			else:
-				states = states.reshape(B, episode_len, self.n_agents, self.state_dim)
-			params = self.hypernet(states)
-			params = params.reshape(B * episode_len, self.num_params_mixer)
-			update_module_params(module=self.mixer, params=params, param_dim=1,
-								 filter_cond=lambda module: isinstance(module, nn.Linear) or isinstance(module, LinearHyper),
-								 replace_func=partial(batch_linear, absweight=True))
-		else:
-			update_module_params(module=self.mixer, filter_cond=lambda module: isinstance(module, nn.Linear), replace_func=abs_linear)
+		# if self.use_hypernet:
+		# 	if self.hypernet_flat:
+		# 		states = states.reshape(B, episode_len, self.state_dim)
+		# 	else:
+		# 		states = states.reshape(B, episode_len, self.n_agents, self.state_dim)
+		# 	params = self.hypernet(states)
+		# 	params = params.reshape(B * episode_len, self.num_params_mixer)
+		# 	update_module_params(module=self.mixer, params=params, param_dim=1,
+		# 						 filter_cond=lambda module: isinstance(module, nn.Linear) or isinstance(module, LinearHyper),
+		# 						 replace_func=partial(batch_linear, absweight=True))
+		# else:
+		# 	update_module_params(module=self.mixer, filter_cond=lambda module: isinstance(module, nn.Linear), replace_func=abs_linear)
 		q_values = q_values.reshape(B * episode_len, self.n_agents, 1)
 		global_q = self.mixer(q_values)
 		global_q = global_q.reshape(B, episode_len, 1)
