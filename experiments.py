@@ -36,7 +36,7 @@ def arguments():
 
 
 def build_cmd(env, config, params):
-	return "python src/main.py --config={config} --env-config={env} with {params}".format(env=env, config=config, params=" ".join(params))
+	return "python3.8 src/main.py --config={config} --env-config={env} with {params}".format(env=env, config=config, params=" ".join(params))
 
 
 def run_cmd(cmd):
