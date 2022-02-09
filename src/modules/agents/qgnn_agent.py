@@ -51,9 +51,9 @@ class QGNNAgent(nn.Module):
         self.rnn = RNN(input_shape, args)
 
         # GNNs
-        edgeconv_nn_actor = MLP(input_dim=2*self.hidden_dim, output_dim=self.hidden_dim, layer_sizes=[self.hidden_dim*3//2], batchnorm=self.use_layernorm)
-        gnn_geometric = EdgeConv(nn=edgeconv_nn_actor, aggr='mean')
-        self.gnn = GNNwrapper(gnn_geometric)
+        self.edgeconv_nn_actor = MLP(input_dim=2*self.hidden_dim, output_dim=self.hidden_dim, layer_sizes=[self.hidden_dim*3//2], batchnorm=self.use_layernorm)
+        self.gnn_geometric = EdgeConv(nn=self.edgeconv_nn_actor, aggr='mean')
+        self.gnn = GNNwrapper(self.gnn_geometric)
 
         # Q Net
         self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(self.hidden_dim+self.out_dim)//2], batchnorm=self.use_layernorm)
@@ -74,7 +74,7 @@ class QGNNAgent(nn.Module):
 
 
 
-    def get_adj(self, adj, batch, n_agents):
+    def get_adj(self, adj, batch, n_agents, device):
         if adj is not None:
             adj = adj.reshape(batch, n_agents, n_agents)
         else:
