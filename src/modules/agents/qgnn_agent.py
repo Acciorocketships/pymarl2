@@ -74,7 +74,7 @@ class QGNNAgent(nn.Module):
 
 
 
-    def get_adj(self, adj, batch, n_agents, device):
+    def get_adj(self, adj, batch, n_agents):
         if adj is not None:
             adj = adj.reshape(batch, n_agents, n_agents)
         else:
