@@ -20,6 +20,12 @@ ex = Experiment("pymarl")
 ex.logger = logger
 ex.captured_out_filter = apply_backspaces_and_linefeeds
 
+from neptunecontrib.monitoring.sacred import NeptuneObserver
+ex.observers.append(NeptuneObserver(
+	project_name="sphericalcow/pymarl",
+	api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI1NTJmOTJhZi05MmM3LTQ0MTctYjY5NS00MGU3MDE1MWE5NjgifQ==",
+	))
+
 results_path = join(dirname(dirname(abspath(__file__))), "results")
 
 
@@ -30,13 +36,6 @@ def my_main(_run, _config, _log):
 	np.random.seed(config["seed"])
 	th.manual_seed(config["seed"])
 	config['env_args']['seed'] = config["seed"]
-
-	if config.get("use_neptune", False):
-		from neptunecontrib.monitoring.sacred import NeptuneObserver
-		ex.observers.append(NeptuneObserver(
-			project_name="sphericalcow/pymarl",
-			api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI1NTJmOTJhZi05MmM3LTQ0MTctYjY5NS00MGU3MDE1MWE5NjgifQ==",
-			))
 	
 	# run
 	if "use_per" in _config and _config["use_per"]:
