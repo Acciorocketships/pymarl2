@@ -2,7 +2,7 @@ from torch import nn
 import torch
 import numpy as np
 # from utils.th_utils import orthogonal_init_
-from torch_geometric.nn import EdgeConv
+from torch_geometric.nn import Sequential, EdgeConv, GraphConv
 from modules.layer.mlp import MLP
 from modules.layer.gnn_wrapper import GNNwrapper
 
@@ -45,18 +45,18 @@ class QGNNAgent(nn.Module):
 		self.hidden_dim = args.rnn_hidden_dim
 		self.out_dim = args.n_actions
 		self.use_layernorm = getattr(args, "model_use_layernorm", False)
-		self.adj_dropout = getattr(args, "adj_dropout", 0.)
+		self.adj_dropout = getattr(args, "model_adj_dropout", 0.)
+		self.model_gnn_type = getattr(args, "model_gnn_type", "edgeconv")
+		self.model_gnn_layers = getattr(args, "model_gnn_layers", 1)
 
 		# Trajectory Encoder
 		self.rnn = RNN(input_shape, args)
 
 		# GNNs
-		self.edgeconv_nn_actor = MLP(input_dim=2*self.hidden_dim, output_dim=self.hidden_dim, layer_sizes=[self.hidden_dim*3//2], batchnorm=self.use_layernorm)
-		self.gnn_geometric = EdgeConv(nn=self.edgeconv_nn_actor, aggr='mean')
-		self.gnn = GNNwrapper(self.gnn_geometric)
+		self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=self.hidden_dim, layernorm=self.use_layernorm)
 
 		# Q Net
-		self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(self.hidden_dim+self.out_dim)//2], batchnorm=self.use_layernorm)
+		self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(self.hidden_dim+self.out_dim)//2], layernorm=self.use_layernorm)
 
 		
 
@@ -99,6 +99,35 @@ class QGNNAgent(nn.Module):
 
 	def init_hidden(self):
 		return self.rnn.init_hidden()
+
+
+
+def gnn_builder(gnn_type='edgeconv', layers=1, dim=64, layernorm=False):
+	
+	gnn_layers = []
+
+	if gnn_type == 'edgeconv':
+		for i in range(layers):
+			net = MLP(input_dim=2*dim, output_dim=dim, layer_sizes=[dim*3//2], layernorm=layernorm)
+			edgeconv_layer = EdgeConv(nn=net, aggr='mean')
+			gnn_layers.append((edgeconv_layer, 'x, edge_index -> x'))
+			if i+1 < layers:
+				gnn_layers.append(nn.ReLU(inplace=True))
+
+	elif gnn_type == 'graphconv':
+		for i in range(layers):
+			graphconv_layer = GraphConv(in_channels=dim, out_channels=dim, aggr='mean')
+			gnn_layers.append((graphconv_layer, 'x, edge_index -> x'))
+			if i+1 < layers:
+				gnn_layers.append(nn.ReLU(inplace=True))
+	
+	gnn_geometric = Sequential('x, edge_index', gnn_layers)
+	gnn = GNNwrapper(gnn_geometric)
+	return gnn
+
+
+
+
 
 
 

@@ -14,22 +14,26 @@ class QGNNMixer(nn.Module):
 		self.args = args
 		self.n_agents = args.n_agents
 		self.state_dim = int(np.prod(args.state_shape))
-		self.embed_dim = args.mixing_embed_dim
-		self.mixer_nlayers = args.mixer_nlayers
+		self.embed_dim = args.mixer_embed_dim
+		self.mixer_psi_layers = args.mixer_psi_layers
+		self.mixer_phi_layers = args.mixer_phi_layers
 		self.mixer_midmult = args.mixer_midmult
-		self.hypernet_flat = getattr(args, "hypernet_flat", True)
-		self.use_hypernet = getattr(args, "use_hypernet", False)
+		self.hypernet_flat = getattr(args, "mixer_hypernet_flat", True)
+		self.use_hypernet = getattr(args, "mixer_use_hypernet", False)
 		self.use_layernorm = getattr(args, "mixer_use_layernorm", False)
-		self.use_genagg = getattr(args, "use_genagg", True)
+		self.use_genagg = getattr(args, "mixer_use_genagg", True)
+		self.heterogeneous= getattr(args, "mixer_heterogeneous", False)
 		
 		if self.use_genagg:
 			self.mixer = AggMixer(input_dim=1, hidden_dim=self.embed_dim, output_dim=1, 
-								  psi_layers=self.mixer_nlayers, phi_layers=self.mixer_nlayers, 
-								  midmult=self.mixer_midmult, layernorm=self.use_layernorm)
+								  psi_layers=self.mixer_psi_layers, phi_layers=self.mixer_phi_layers, 
+								  midmult=self.mixer_midmult, layernorm=self.use_layernorm, 
+								  heterogeneous=self.heterogeneous, n_agents=self.n_agents)
 		else:
 			self.mixer = Mixer(input_dim=1, hidden_dim=self.embed_dim, output_dim=1, 
-							   psi_layers=self.mixer_nlayers, phi_layers=self.mixer_nlayers, 
-							   midmult=self.mixer_midmult, layernorm=self.use_layernorm)
+								  psi_layers=self.mixer_psi_layers, phi_layers=self.mixer_phi_layers, 
+								  midmult=self.mixer_midmult, layernorm=self.use_layernorm, 
+								  heterogeneous=self.heterogeneous, n_agents=self.n_agents)
 
 		self.num_params_mixer = get_num_params(self.mixer)
 

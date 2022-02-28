@@ -12,7 +12,7 @@ buffer_size: 5000
 batch_size: 128
 optimizer: 'adam'
 
-t_max: 10050000
+t_max: 2000000
 
 # update the target network every {} episodes
 target_update_interval: 200
@@ -30,15 +30,20 @@ optimizer: 'adam'
 q_lambda: False
 
 # options
+model_gnn_type: "edgeconv"
+model_gnn_layers: 1
 model_use_layernorm: False
+model_adj_dropout: 0.0
+
 mixer_use_layernorm: False
-use_genagg: True
-use_hypernet: False
-hypernet_flat: True
-adj_dropout: 0.0
-mixing_embed_dim: 4
-mixer_nlayers: 2
-mixer_midmult: 2.0
+mixer_use_genagg: True
+mixer_use_hypernet: False
+mixer_hypernet_flat: True
+mixer_heterogeneous: False
+mixer_embed_dim: 8
+mixer_psi_layers: 2
+mixer_phi_layers: 2
+mixer_midmult: 1.0
 
 # Priority experience replay
 use_per: False
@@ -49,4 +54,5 @@ return_priority: False
 name: "qgnn_env=8_adam_td_lambda"
 
 # QMIX params
+mixing_embed_dim: 32
 hypernet_embed: 64
