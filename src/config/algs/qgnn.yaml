@@ -31,8 +31,8 @@ q_lambda: False
 
 # options
 model_gnn_type: "edgeconv"
-model_gnn_layers: 1
-model_use_layernorm: False
+model_gnn_layers: 2
+model_use_layernorm: True
 model_adj_dropout: 0.0
 
 mixer_use_layernorm: False
@@ -40,10 +40,10 @@ mixer_use_genagg: True
 mixer_use_hypernet: False
 mixer_hypernet_flat: True
 mixer_heterogeneous: False
-mixer_embed_dim: 8
+mixer_embed_dim: 4
 mixer_psi_layers: 2
 mixer_phi_layers: 2
-mixer_midmult: 1.0
+mixer_midmult: 2.0
 
 # Priority experience replay
 use_per: False

@@ -7,6 +7,7 @@ from .multiagentenv import MultiAgentEnv
 from .starcraft import StarCraft2Env
 from .matrix_game import OneStepMatrixGame
 from .stag_hunt import StagHunt
+from .estimate_game import EstimateGame
 
 try:
     gfootball = True
@@ -18,6 +19,7 @@ def env_fn(env, **kwargs) -> MultiAgentEnv:
     return env(**kwargs)
 
 REGISTRY = {}
+REGISTRY["estimate"] = partial(env_fn, env=EstimateGame)
 REGISTRY["sc2"] = partial(env_fn, env=StarCraft2Env)
 REGISTRY["stag_hunt"] = partial(env_fn, env=StagHunt)
 REGISTRY["one_step_matrix_game"] = partial(env_fn, env=OneStepMatrixGame)
