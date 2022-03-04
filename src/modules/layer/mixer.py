@@ -55,10 +55,7 @@ class AggMixer(nn.Module):
 				self.psi = MultiModule(n_agents=n_agents, module=MLP, input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
 		if self.phi_layers > 0:
 			phi_layer_sizes = layers(input_dim=hidden_dim, output_dim=output_dim, nlayers=phi_layers, midmult=midmult)
-			if not heterogeneous:
-				self.phi = MLP(input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
-			else:
-				self.phi = MultiModule(n_agents=n_agents, module=MLP, input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
+			self.phi = MLP(input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
 
 
 	def forward(self, X):
@@ -72,5 +69,5 @@ class AggMixer(nn.Module):
 		if self.phi_layers > 0:
 			global_embed = self.phi(local_embed_sum)
 		else:
-			global_embed = local_embed_sum
+			global_embed = local_embed_sum.sum(dim=-1).unsqueeze(-1)
 		return global_embed
