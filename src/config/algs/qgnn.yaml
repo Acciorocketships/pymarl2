@@ -40,7 +40,7 @@ mixer_use_genagg: True
 mixer_use_hypernet: False
 mixer_hypernet_flat: True
 mixer_heterogeneous: False
-mixer_embed_dim: 4
+mixer_embed_dim: 8
 mixer_psi_layers: 2
 mixer_phi_layers: 2
 mixer_midmult: 2.0
