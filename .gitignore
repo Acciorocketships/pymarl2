@@ -5,3 +5,4 @@ results/
 *.png
 *.zip
 .DS_Store
+src/main.py

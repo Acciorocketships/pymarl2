@@ -33,8 +33,8 @@ class EstimateGame(MultiAgentEnv):
 		# state: batch x n_agents x 1
 		# adjacency: batch x n_agents x n_agents
 
-		# diag_indices = np.arange(self.n_agents)
-		# adjacency[:,diag_indices,diag_indices] = 0
+		diag_indices = np.arange(self.n_agents)
+		adjacency[:,diag_indices,diag_indices] = 0
 		neighbour_states = adjacency[:,:,:,None] * state[:,None,:,:]
 		degree = np.sum(adjacency, axis=-2)[:,:,None]
 		degree[degree==0] = 1
@@ -52,7 +52,7 @@ class EstimateGame(MultiAgentEnv):
 		A = np.random.rand(self.batch_size, self.n_agents, self.n_agents) < orig_density
 		A = A * A.transpose((0,2,1))
 		diag_indices = np.arange(self.n_agents)
-		A[:,diag_indices,diag_indices] = 0
+		A[:,diag_indices,diag_indices] = 1
 		# A: batch x n_agents x n_agents
 		return A.astype(int)
 
@@ -82,7 +82,7 @@ class EstimateGame(MultiAgentEnv):
 		if not self.batch_mode:
 			qglobal = qglobal[0].item()
 			terminated = terminated[0]
-		return qglobal, terminated, {}
+		return qglobal, terminated, {"adj": self.adjacency}
 
 
 	def reset(self):

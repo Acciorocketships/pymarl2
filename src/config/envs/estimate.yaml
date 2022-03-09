@@ -13,3 +13,7 @@ log_interval: 10000
 runner_log_interval: 10000
 learner_log_interval: 10000
 t_max: 2050000
+
+obs_agent_id: False
+obs_last_action: False
+rnn_hidden_dim: 8

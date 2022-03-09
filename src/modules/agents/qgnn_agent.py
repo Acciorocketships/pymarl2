@@ -3,6 +3,7 @@ import torch
 import numpy as np
 # from utils.th_utils import orthogonal_init_
 from torch_geometric.nn import Sequential, EdgeConv, GraphConv
+from modules.layer.agggnn import AggGNN, create_agg_gnn
 from modules.layer.mlp import MLP
 from modules.layer.gnn_wrapper import GNNwrapper
 
@@ -68,6 +69,8 @@ class QGNNAgent(nn.Module):
 		adj = self.get_adj(adj, batch, n_agents)
 		embedding = self.gnn(h, adj)
 
+		import pdb; pdb.set_trace()
+
 		qvals = self.q_net(embedding)
 
 		return qvals, h
@@ -118,6 +121,13 @@ def gnn_builder(gnn_type='edgeconv', layers=1, dim=64, layernorm=False):
 		for i in range(layers):
 			graphconv_layer = GraphConv(in_channels=dim, out_channels=dim, aggr='mean')
 			gnn_layers.append((graphconv_layer, 'x, edge_index -> x'))
+			if i+1 < layers:
+				gnn_layers.append(nn.ReLU(inplace=True))
+
+	elif gnn_type == 'agggnn':
+		for i in range(layers):
+			agggnn_layer = create_agg_gnn(in_dim=dim, out_dim=dim, nlayers=2, midmult=1., layernorm=layernorm, agg_learnable=False)
+			gnn_layers.append((agggnn_layer, 'x, edge_index -> x'))
 			if i+1 < layers:
 				gnn_layers.append(nn.ReLU(inplace=True))
 	
