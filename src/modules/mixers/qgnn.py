@@ -13,7 +13,7 @@ class QGNNMixer(nn.Module):
 
 		self.args = args
 		self.n_agents = args.n_agents
-		self.state_dim = int(np.prod(args.state_shape))
+		self.state_dim = int(np.prod(args.state_shape) / self.n_agents)
 		self.embed_dim = args.mixer_embed_dim
 		self.mixer_psi_layers = args.mixer_psi_layers
 		self.mixer_phi_layers = args.mixer_phi_layers
@@ -39,24 +39,21 @@ class QGNNMixer(nn.Module):
 
 		if self.use_hypernet:
 			if self.hypernet_flat:
-				self.hypernet = MLP(input_dim=self.state_dim, output_dim=self.num_params_mixer, 
-									layer_sizes=layers(input_dim=self.state_dim, output_dim=self.num_params_mixer, nlayers=2, midmult=1.), 
+				self.hypernet = MLP(input_dim=self.state_dim*self.n_agents, output_dim=self.num_params_mixer, 
+									layer_sizes=layers(input_dim=self.state_dim*self.n_agents, output_dim=self.num_params_mixer, nlayers=2, midmult=1.), 
 									layernorm=self.use_layernorm)
 			else:
-				self.state_dim /= self.n_agents
 				self.hypernet = AggMixer(input_dim=self.state_dim, hidden_dim=self.state_dim, 
 										 output_dim=self.num_params_mixer, layernorm=self.use_layernorm)
 
 
 	def forward(self, q_values, states):
 		# q_values: batch x episode_len x n_agents
-		# states: batch x episode_len x n_agents x obs_shape
+		# states: batch x episode_len x n_agents * obs_shape
 		# output: batch x episode_len x 1
 		B, episode_len, n_agents = q_values.shape
 		if self.use_hypernet:
-			if self.hypernet_flat:
-				states = states.reshape(B, episode_len, self.state_dim)
-			else:
+			if not self.hypernet_flat:
 				states = states.reshape(B, episode_len, self.n_agents, self.state_dim)
 			params = self.hypernet(states)
 			params = params.reshape(B * episode_len, self.num_params_mixer)
