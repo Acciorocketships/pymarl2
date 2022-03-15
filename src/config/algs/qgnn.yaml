@@ -35,8 +35,8 @@ model_gnn_layers: 2
 model_use_layernorm: True
 model_adj_dropout: 0.0
 
-mixer_use_layernorm: True
 mixer_use_genagg: True
+mixer_use_batchnorm: False
 mixer_use_hypernet: False
 mixer_hypernet_flat: False
 mixer_heterogeneous: False

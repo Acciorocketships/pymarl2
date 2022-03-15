@@ -6,22 +6,22 @@ from modules.layer.genagg import GenAgg
 
 class Mixer(nn.Module):
 
-	def __init__(self, input_dim, output_dim, hidden_dim, psi_layers=2, phi_layers=2, layernorm=False, midmult=1., heterogeneous=False, n_agents=None):
+	def __init__(self, input_dim, output_dim, hidden_dim, psi_layers=2, phi_layers=2, batchnorm=False, midmult=1., heterogeneous=False, n_agents=None):
 		super().__init__()
 		self.psi_layers = psi_layers
 		self.phi_layers = phi_layers
 		if self.psi_layers > 0:
 			psi_layer_sizes = layers(input_dim=input_dim, output_dim=hidden_dim, nlayers=psi_layers, midmult=midmult)
 			if not heterogeneous:
-				self.psi = MLP(input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, layernorm=layernorm)
+				self.psi = MLP(input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, batchnorm=batchnorm)
 			else:
-				self.psi = MultiModule(n_agents=n_agents, module=MLP, input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, layernorm=layernorm)
+				self.psi = MultiModule(n_agents=n_agents, module=MLP, input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, batchnorm=batchnorm)
 		if self.phi_layers > 0:
 			phi_layer_sizes = layers(input_dim=hidden_dim, output_dim=output_dim, nlayers=phi_layers, midmult=midmult)
 			if not heterogeneous:
-				self.phi = MLP(input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, layernorm=layernorm)
+				self.phi = MLP(input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, batchnorm=batchnorm)
 			else:
-				self.phi = MultiModule(n_agents=n_agents, module=MLP, input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, layernorm=layernorm)
+				self.phi = MultiModule(n_agents=n_agents, module=MLP, input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, batchnorm=batchnorm)
 
 
 	def forward(self, X):
@@ -42,7 +42,7 @@ class Mixer(nn.Module):
 
 class AggMixer(nn.Module):
 
-	def __init__(self, input_dim, output_dim, hidden_dim, psi_layers=2, phi_layers=2, layernorm=False, midmult=1., heterogeneous=False, n_agents=None):
+	def __init__(self, input_dim, output_dim, hidden_dim, psi_layers=2, phi_layers=2, batchnorm=False, midmult=1., heterogeneous=False, n_agents=None):
 		super().__init__()
 		self.psi_layers = psi_layers
 		self.phi_layers = phi_layers
@@ -50,12 +50,12 @@ class AggMixer(nn.Module):
 		if self.psi_layers > 0:
 			psi_layer_sizes = layers(input_dim=input_dim, output_dim=hidden_dim, nlayers=psi_layers, midmult=midmult)
 			if not heterogeneous:
-				self.psi = MLP(input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
+				self.psi = MLP(input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, batchnorm=batchnorm, nonlinearity=nn.PReLU)
 			else:
-				self.psi = MultiModule(n_agents=n_agents, module=MLP, input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
+				self.psi = MultiModule(n_agents=n_agents, module=MLP, input_dim=input_dim, output_dim=hidden_dim, layer_sizes=psi_layer_sizes, batchnorm=batchnorm, nonlinearity=nn.PReLU)
 		if self.phi_layers > 0:
 			phi_layer_sizes = layers(input_dim=hidden_dim, output_dim=output_dim, nlayers=phi_layers, midmult=midmult)
-			self.phi = MLP(input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, layernorm=layernorm, nonlinearity=nn.PReLU)
+			self.phi = MLP(input_dim=hidden_dim, output_dim=output_dim, layer_sizes=phi_layer_sizes, batchnorm=batchnorm, nonlinearity=nn.PReLU)
 
 
 	def forward(self, X):
