@@ -67,6 +67,7 @@ class QGNNAgent(nn.Module):
 		h = self.rnn(inputs, hidden_state)
 
 		adj = self.get_adj(adj, batch, n_agents)
+		import pdb; pdb.set_trace()
 		embedding = self.gnn(h, adj)
 
 		qvals = self.q_net(embedding)

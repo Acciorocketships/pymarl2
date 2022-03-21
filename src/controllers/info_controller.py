@@ -5,8 +5,8 @@ import torch as th
 from utils.rl_utils import RunningMeanStd
 import numpy as np
 
-# This multi-agent controller shares parameters between agents
-class NMAC(BasicMAC):
+# This multi-agent controller shares parameters between agents and includes the info dict from the environment
+class InfoMAC(BasicMAC):
     def __init__(self, scheme, groups, args):
         super(NMAC, self).__init__(scheme, groups, args)
         
