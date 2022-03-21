@@ -81,7 +81,7 @@ class EstimateGame(MultiAgentEnv):
 		if not self.batch_mode:
 			qglobal = qglobal[0].item()
 			terminated = terminated[0]
-		return qglobal, terminated, {"adj": self.adjacency}
+		return qglobal, terminated, {}
 
 
 	def reset(self):
@@ -94,6 +94,10 @@ class EstimateGame(MultiAgentEnv):
 
 	def get_obs_agent(self, agent_id=slice(None), batch=slice(None)):
 		return self.state[batch, agent_id, :]
+
+
+	def get_info(self, batch=0):
+		return {"adj": self.adjacency[batch]}
 
 
 	def get_obs(self, batch=0):

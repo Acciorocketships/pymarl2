@@ -19,6 +19,9 @@ class MultiAgentEnv(object):
     def get_state(self):
         raise NotImplementedError
 
+    def get_info(self):
+        return {}
+
     def get_state_size(self):
         """ Returns the shape of the state"""
         raise NotImplementedError
