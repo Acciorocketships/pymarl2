@@ -63,13 +63,12 @@ class EstimateGame(MultiAgentEnv):
 
 
 	def rectify_actions(self, actions):
-		# actions: n_agents x batch
+		# actions: batch x n_agents OR n_agents
 		if not self.batch_mode:
-			actions = actions[:,None]
-		assert actions.shape[0] == self.n_agents and actions.shape[1] == self.batch_size, "incorrect actions dimensions"
-		actions = actions.transpose((1,0))[:,:,None]
+			actions = actions[None,:]
+		assert actions.shape[0] == self.batch_size and actions.shape[1] == self.n_agents, "incorrect actions dimensions"
 		# actions: batch x n_agents x 1
-		return actions
+		return np.array(actions)[:,:,None]
 
 
 	def step(self, actions):
@@ -78,7 +77,7 @@ class EstimateGame(MultiAgentEnv):
 		mixed_state = self.mix_states(self.state, self.adjacency)
 		qind = self.local_reward(mixed_state, actions)[:,:,0]
 		qglobal = self.mixfunc(qind)
-		terminated = [(self.t >= self.episode_limit) for _ in range(self.batch_size)]
+		terminated = np.array([(self.t >= self.episode_limit) for _ in range(self.batch_size)])
 		if not self.batch_mode:
 			qglobal = qglobal[0].item()
 			terminated = terminated[0]
@@ -88,36 +87,43 @@ class EstimateGame(MultiAgentEnv):
 	def reset(self):
 		self.state = self.gen_state()
 		self.adjacency = self.gen_adjacency()
+		self.avail_actions = np.ones((self.state.shape[0], self.state.shape[1], self.n_actions))
 		self.t = 0
 		return self.get_obs()
 
 
-	def get_obs_agent(self, agent_id, batch=0):
-		return self.state[batch, agent_id]
+	def get_obs_agent(self, agent_id=slice(None), batch=slice(None)):
+		return self.state[batch, agent_id, :]
 
 
-	def get_obs(self):
-		return [self.get_obs_agent(i) for i in range(self.n_agents)]
+	def get_obs(self, batch=0):
+		if not self.batch_mode:
+			return self.get_obs_agent(agent_id=slice(None), batch=batch)
+		else:
+			return self.get_obs_agent(agent_id=slice(None))
 
 
 	def get_obs_size(self):
 		return 1
 
 
-	def get_state(self):
-		return self.state[0].reshape(self.get_state_size())
+	def get_state(self, batch=slice(None)):
+		return self.state[batch].reshape(-1, self.get_state_size())
 
 
 	def get_state_size(self):
 		return self.n_agents
 
 
-	def get_avail_agent_actions(self, agent_id):
-		return np.ones(self.n_actions)
+	def get_avail_agent_actions(self, agent_id=slice(None), batch=slice(None)):
+		return self.avail_actions[batch, agent_id, :]
 
 
-	def get_avail_actions(self):
-		return [self.get_avail_agent_actions(i) for i in range(self.n_agents)]
+	def get_avail_actions(self, batch=0):
+		if not self.batch_mode:
+			return self.get_avail_agent_actions(agent_id=slice(None), batch=batch)
+		else:
+			return self.get_avail_agent_actions(agent_id=slice(None))
 
 
 	def get_total_actions(self):

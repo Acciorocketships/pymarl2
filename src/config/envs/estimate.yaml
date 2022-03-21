@@ -5,6 +5,7 @@ env_args:
   map_name: "estimate"
   n_agents: 8
   n_actions: 10
+  batch_size: null
 
 test_greedy: True
 test_nepisode: 32
