@@ -125,7 +125,7 @@ def gnn_builder(gnn_type='edgeconv', layers=1, dim=64, layernorm=False):
 
 	elif gnn_type == 'agggnn':
 		for i in range(layers):
-			agggnn_layer = create_agg_gnn(in_dim=dim, out_dim=dim, nlayers=2, midmult=1., layernorm=layernorm, agg_learnable=False)
+			agggnn_layer = create_agg_gnn(in_dim=dim, out_dim=dim, nlayers=2, midmult=1., layernorm=layernorm, fcom=lambda xi, xj: xj,  aggr='mean')
 			gnn_layers.append((agggnn_layer, 'x, edge_index -> x'))
 			if i+1 < layers:
 				gnn_layers.append(nn.ReLU(inplace=True))

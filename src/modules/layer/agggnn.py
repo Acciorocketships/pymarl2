@@ -36,9 +36,13 @@ class AggGNN(MessagePassing):
 			fupdate : Callable = lambda x_i, x_j_agg: x_i + x_j_agg,
 			fcom : Callable = lambda x_i, x_j: x_j,
 			learnable: bool = True,
+			aggr : str = 'genagg',
 		):
 		super().__init__()
-		self.aggr = GenAggSparse(p=1., a=0., shift=False, learnable=learnable)
+		if aggr == 'genagg':
+			self.aggr = GenAggSparse(p=1., a=0., shift=False, learnable=learnable)
+		else:
+			self.aggr = aggr
 		self.fcom = fcom
 		self.fupdate = fupdate
 
@@ -48,13 +52,16 @@ class AggGNN(MessagePassing):
 		return y
 
 	def aggregate(self, inputs: Tensor, index: Tensor,	ptr: Optional[torch.Tensor] = None, dim_size: Optional[int] = None) -> Tensor:
-		return self.aggr(inputs, index, dim_size=dim_size) 
+		if self.aggr == 'genagg':
+			return self.aggr(inputs, index, dim_size=dim_size)
+		else:
+			return super().aggregate(inputs=inputs, index=index, ptr=ptr, dim_size=dim_size)
 
 	def message(self, x_i: Tensor, x_j: Tensor) -> Tensor:
 		return self.fcom(x_i, x_j)
 
 
-def create_agg_gnn(in_dim, out_dim, nlayers=2, layernorm=True, midmult=1., fcom=None, agg_learnable=True):
+def create_agg_gnn(in_dim, out_dim, nlayers=2, layernorm=True, midmult=1., fcom=None, aggr='genagg'):
 	# Creates a GNN with the given parameters
 	# nlayers: the number of layers for both MLPs (3 layers means [input_dim, hidden1, hidden2, output_dim])
 	# layernorm: whether or not to include layernorm in both MLPs
@@ -69,18 +76,16 @@ def create_agg_gnn(in_dim, out_dim, nlayers=2, layernorm=True, midmult=1., fcom=
 	fupdate_net = MLP(input_dim=in_dim*2, output_dim=out_dim, layernorm=layernorm,
 				layer_sizes=layers(input_dim=in_dim*2, output_dim=out_dim, nlayers=nlayers, midmult=midmult))
 	fupdate = partial(compose, f=fupdate_net)
-	gnn = AggGNN(fupdate=fupdate, fcom=fcom)
-	gnn.add_module('f_com', fcom_net)
+	gnn = AggGNN(fupdate=fupdate, fcom=fcom, aggr=aggr)
+	if fcom is None:
+		gnn.add_module('f_com', fcom_net)
 	gnn.add_module('f_update', fupdate_net)
 	return gnn
 
 
 if __name__ == '__main__':
 	from torch_geometric.data import Data
-	aggr = GenAggSparse(p=1., a=0., shift=False, learnable=True)
-	GraphConvGenAgg = patch_conv_with_aggr(GraphConv, aggr)
-	gnn = GraphConvGenAgg(1, 1) 
-	#gnn = create_agg_gnn(in_dim=1, out_dim=1)
+	gnn = create_agg_gnn(in_dim=1, out_dim=1, layernorm=True, fcom=None, aggr='genagg')
 
 
 	edge_index = torch.tensor([[0, 1, 1, 2],
