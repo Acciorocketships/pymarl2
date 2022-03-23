@@ -69,7 +69,8 @@ def create_agg_gnn(in_dim, out_dim, nlayers=2, layernorm=True, midmult=1., fcom=
 	def compose(*inputs, f=None):
 		return f(torch.cat(inputs, dim=-1))
 
-	if fcom is None:
+	fcom_mlp = (fcom is None)
+	if fcom_mlp:
 		fcom_net = MLP(input_dim=in_dim*2, output_dim=in_dim, layernorm=layernorm,
 					layer_sizes=layers(input_dim=in_dim*2, output_dim=in_dim, nlayers=nlayers, midmult=midmult))
 		fcom = partial(compose, f=fcom_net)
@@ -77,7 +78,7 @@ def create_agg_gnn(in_dim, out_dim, nlayers=2, layernorm=True, midmult=1., fcom=
 				layer_sizes=layers(input_dim=in_dim*2, output_dim=out_dim, nlayers=nlayers, midmult=midmult))
 	fupdate = partial(compose, f=fupdate_net)
 	gnn = AggGNN(fupdate=fupdate, fcom=fcom, aggr=aggr)
-	if fcom is None:
+	if fcom_mlp:
 		gnn.add_module('f_com', fcom_net)
 	gnn.add_module('f_update', fupdate_net)
 	return gnn
