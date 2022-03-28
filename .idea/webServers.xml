@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="4e54b7fd-3142-4bea-9e8e-aed514271447" name="conwy">
+        <fileTransfer accessType="SFTP" host="conwy.cl.cam.ac.uk" port="22" sshConfigId="50f3393f-eac9-4c4d-9043-a39656c663fb" sshConfig="ryko@conwy.cl.cam.ac.uk:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

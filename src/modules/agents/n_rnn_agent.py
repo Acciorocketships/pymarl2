@@ -26,7 +26,7 @@ class NRNNAgent(nn.Module):
         # make hidden states on same device as model
         return self.fc1.weight.new(1, self.args.rnn_hidden_dim).zero_()
 
-    def forward(self, inputs, hidden_state):
+    def forward(self, inputs, hidden_state, info={}):
         b, a, e = inputs.size()
 
         inputs = inputs.view(-1, e)

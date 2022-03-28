@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="conwy.cl.cam.ac.uk" id="50f3393f-eac9-4c4d-9043-a39656c663fb" keyPath="$USER_HOME$/.ssh/id_rsa" port="22" nameFormat="DESCRIPTIVE" username="ryko" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>

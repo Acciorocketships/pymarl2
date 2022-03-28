@@ -77,6 +77,8 @@ class StarCraft2Env(MultiAgentEnv):
         obs_terrain_height=False,
         obs_instead_of_state=False,
         obs_timestep_number=False,
+        sight_range=9,
+        comm_range=9,
         state_last_action=True,
         state_timestep_number=False,
         reward_sparse=False,
@@ -215,6 +217,9 @@ class StarCraft2Env(MultiAgentEnv):
             self.obs_own_health = True
         self.n_obs_pathing = 8
         self.n_obs_height = 9
+
+        self.sight_range = sight_range
+        self.comm_range = comm_range
 
         # Rewards args
         self.reward_sparse = reward_sparse
@@ -735,7 +740,7 @@ class StarCraft2Env(MultiAgentEnv):
 
     def unit_sight_range(self, agent_id):
         """Returns the sight range for an agent."""
-        return 9
+        return self.sight_range
 
     def unit_max_cooldown(self, unit):
         """Returns the maximal cooldown for a unit."""
@@ -1529,3 +1534,23 @@ class StarCraft2Env(MultiAgentEnv):
             "restarts": self.force_restarts,
         }
         return stats
+
+
+    def get_info(self):
+        info = {}
+        adj = np.zeros((self.n_agents, self.n_agents))
+        for agent_id in range(self.n_agents):
+            self_unit = self.get_unit_by_id(agent_id)
+            self_x = self_unit.pos.x
+            self_y = self_unit.pos.y
+            for ally_id in range(agent_id+1,self.n_agents):
+                ally_unit = self.get_unit_by_id(ally_id)
+                ally_x = ally_unit.pos.x
+                ally_y = ally_unit.pos.y
+                dist = self.distance(self_x, self_y, ally_x, ally_y)
+                if dist < self.comm_range:
+                    adj[agent_id, ally_id] = 1
+                    adj[ally_id, agent_id] = 1
+            adj[agent_id, agent_id] = 1
+        info["adj"] = adj
+        return info
