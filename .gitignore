@@ -6,3 +6,4 @@ results/
 *.zip
 .DS_Store
 src/main.py
+*.egg-info/

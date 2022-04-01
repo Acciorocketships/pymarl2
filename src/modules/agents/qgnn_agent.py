@@ -1,11 +1,10 @@
 from torch import nn
-import torch
 import numpy as np
 # from utils.th_utils import orthogonal_init_
 from torch_geometric.nn import Sequential, EdgeConv, GraphConv
-from modules.layer.agggnn import AggGNN, create_agg_gnn
-from modules.layer.mlp import MLP
-from modules.layer.gnn_wrapper import GNNwrapper
+from pymarl.modules.layer.agggnn import AggGNN, create_agg_gnn
+from pymarl.modules.layer.mlp import MLP
+from pymarl.modules.layer.gnn_wrapper import GNNwrapper
 
 
 

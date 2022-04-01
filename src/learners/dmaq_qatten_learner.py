@@ -1,13 +1,13 @@
 # From https://github.com/wjh720/QPLEX/, added here for convenience.
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.mixers.dmaq_general import DMAQer
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.mixers.dmaq_general import DMAQer
+from pymarl.utils.rl_utils import build_td_lambda_targets
+from pymarl.utils.th_utils import get_parameters_num
 import torch.nn.functional as F
 import torch as th
 from torch.optim import Adam
 import numpy as np
-from utils.rl_utils import build_td_lambda_targets
-from utils.th_utils import get_parameters_num
 
 class DMAQ_qattenLearner:
     def __init__(self, mac, scheme, logger, args):

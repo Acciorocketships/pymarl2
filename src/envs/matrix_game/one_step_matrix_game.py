@@ -1,5 +1,5 @@
-from envs.multiagentenv import MultiAgentEnv
-from utils.dict2namedtuple import convert
+from pymarl.envs.multiagentenv import MultiAgentEnv
+from pymarl.utils.dict2namedtuple import convert
 import numpy as np
 import torch as th
 

@@ -1,7 +1,7 @@
 import torch as th
 import numpy as np
 from types import SimpleNamespace as SN
-from .segment_tree import SumSegmentTree, MinSegmentTree
+from pymarl.components.segment_tree import SumSegmentTree, MinSegmentTree
 import random
 class EpisodeBatch:
     def __init__(self,

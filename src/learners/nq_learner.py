@@ -1,15 +1,15 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.mixers.nmix import Mixer
-from modules.mixers.vdn import VDNMixer
-from modules.mixers.qatten import QattenMixer
-from modules.mixers.qgnn import QGNNMixer
-from envs.matrix_game import print_matrix_status
-from utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.mixers.nmix import Mixer
+from pymarl.modules.mixers.vdn import VDNMixer
+from pymarl.modules.mixers.qatten import QattenMixer
+from pymarl.modules.mixers.qgnn import QGNNMixer
+from pymarl.envs.matrix_game import print_matrix_status
+from pymarl.utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
+from pymarl.utils.th_utils import get_parameters_num
 import torch as th
 from torch.optim import RMSprop, Adam
 import numpy as np
-from utils.th_utils import get_parameters_num
 
 class NQLearner:
 	def __init__(self, mac, scheme, logger, args):

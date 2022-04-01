@@ -1,7 +1,7 @@
 import numpy as np
 import gfootball.env as football_env
 from gfootball.env import observation_preprocessing
-from ..multiagentenv import MultiAgentEnv
+from pymarl.envs.multiagentenv import MultiAgentEnv
 import gym
 import torch as th
 

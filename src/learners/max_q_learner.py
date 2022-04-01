@@ -1,14 +1,14 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.mixers.vdn import VDNMixer
-from modules.mixers.qmix import QMixer
-from modules.mixers.qmix_central_no_hyper import QMixerCentralFF
-from utils.rl_utils import build_td_lambda_targets
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.mixers.vdn import VDNMixer
+from pymarl.modules.mixers.qmix import QMixer
+from pymarl.modules.mixers.qmix_central_no_hyper import QMixerCentralFF
+from pymarl.utils.rl_utils import build_td_lambda_targets
+from pymarl.utils.th_utils import get_parameters_num
 import torch as th
 from torch.optim import RMSprop, Adam
 from collections import deque
-from controllers import REGISTRY as mac_REGISTRY
-from utils.th_utils import get_parameters_num
+from pymarl.controllers import REGISTRY as mac_REGISTRY
 
 class MAXQLearner:
     def __init__(self, mac, scheme, logger, args):

@@ -1,7 +1,7 @@
-from modules.agents import REGISTRY as agent_REGISTRY
-from components.action_selectors import REGISTRY as action_REGISTRY
+from pymarl.modules.agents import REGISTRY as agent_REGISTRY
+from pymarl.components.action_selectors import REGISTRY as action_REGISTRY
+from pymarl.controllers.basic_controller import BasicMAC
 import torch as th
-from .basic_controller import BasicMAC
 
 
 # This multi-agent controller shares parameters between agents

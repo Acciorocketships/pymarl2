@@ -1,11 +1,11 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.critics.lica import LICACritic
-from components.action_selectors import multinomial_entropy
-from utils.rl_utils import build_td_lambda_targets
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.critics.lica import LICACritic
+from pymarl.components.action_selectors import multinomial_entropy
+from pymarl.utils.rl_utils import build_td_lambda_targets
+from pymarl.utils.th_utils import get_parameters_num
 import torch as th
 from torch.optim import RMSprop, Adam
-from utils.th_utils import get_parameters_num
 
 class LICALearner:
     def __init__(self, mac, scheme, logger, args):

@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from utils.noisy_liner import NoisyLinear
+from pymarl.utils.noisy_liner import NoisyLinear
 from torch.nn import LayerNorm
 
 class NoisyRNNAgent(nn.Module):

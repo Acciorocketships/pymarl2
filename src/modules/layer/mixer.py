@@ -1,7 +1,7 @@
 from torch import nn
 import torch
-from modules.layer.mlp import MLP, MultiModule, layers
-from modules.layer.genagg import GenAgg
+from pymarl.modules.layer.mlp import MLP, MultiModule, layers
+from pymarl.modules.layer.genagg import GenAgg
 
 
 class Mixer(nn.Module):

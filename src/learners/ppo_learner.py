@@ -1,11 +1,11 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from controllers.n_controller import NMAC
-from components.action_selectors import categorical_entropy
-from utils.rl_utils import build_gae_targets
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.controllers.n_controller import NMAC
+from pymarl.components.action_selectors import categorical_entropy
+from pymarl.utils.rl_utils import build_gae_targets
+from pymarl.utils.value_norm import ValueNorm
 import torch as th
 from torch.optim import Adam
-from utils.value_norm import ValueNorm
 
 class PPOLearner:
     def __init__(self, mac, scheme, logger, args):

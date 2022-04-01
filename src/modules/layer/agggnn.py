@@ -8,8 +8,8 @@ from functools import partial
 import torch
 from torch_geometric.nn import MessagePassing, GraphConv
 
-from modules.layer.genagg import GenAggSparse
-from modules.layer.mlp import MLP, layers
+from pymarl.modules.layer.genagg import GenAggSparse
+from pymarl.modules.layer.mlp import MLP, layers
 
 
 def patch_conv_with_aggr(cls, aggr_cls, *aggr_args, **aggr_kwargs):

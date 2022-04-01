@@ -1,4 +1,4 @@
-from envs.multiagentenv import MultiAgentEnv
+from pymarl.envs.multiagentenv import MultiAgentEnv
 import numpy as np
 
 class EstimateGame(MultiAgentEnv):
@@ -139,6 +139,15 @@ class EstimateGame(MultiAgentEnv):
 
 
 	def close(self):
+		pass
+
+	def render(self):
+		pass
+
+	def seed(self):
+		pass
+
+	def save_replay(self):
 		pass
 
 

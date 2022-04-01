@@ -1,15 +1,15 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.critics.fmac_critic import FMACCritic
-from modules.critics.lica import LICACritic
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.critics.fmac_critic import FMACCritic
+from pymarl.modules.critics.lica import LICACritic
 import torch as th
 from torch.optim import RMSprop, Adam
-from modules.mixers.vdn import VDNMixer
-from modules.mixers.qmix import QMixer
-from components.action_selectors import categorical_entropy
-from utils.rl_utils import build_td_lambda_targets
-from components.epsilon_schedules import DecayThenFlatSchedule
-from utils.th_utils import get_parameters_num
+from pymarl.modules.mixers.vdn import VDNMixer
+from pymarl.modules.mixers.qmix import QMixer
+from pymarl.components.action_selectors import categorical_entropy
+from pymarl.utils.rl_utils import build_td_lambda_targets
+from pymarl.components.epsilon_schedules import DecayThenFlatSchedule
+from pymarl.utils.th_utils import get_parameters_num
 
 
 class FMACLearner:

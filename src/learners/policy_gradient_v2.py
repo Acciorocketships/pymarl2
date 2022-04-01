@@ -1,9 +1,9 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.mixers.vdn import VDNMixer
-from modules.mixers.qmix import QMixer
-from utils.rl_utils import build_td_lambda_targets
-from components.action_selectors import categorical_entropy
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.mixers.vdn import VDNMixer
+from pymarl.modules.mixers.qmix import QMixer
+from pymarl.utils.rl_utils import build_td_lambda_targets
+from pymarl.components.action_selectors import categorical_entropy
 import torch as th
 from torch.optim import Adam, RMSprop
 

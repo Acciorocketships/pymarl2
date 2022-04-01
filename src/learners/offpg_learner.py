@@ -1,13 +1,13 @@
 import copy
 from torch.distributions import Categorical
 from torch.optim.rmsprop import RMSprop
-from components.episode_buffer import EpisodeBatch
-from modules.critics.offpg import OffPGCritic
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.critics.offpg import OffPGCritic
+from pymarl.modules.mixers.qmix import QMixer
+from pymarl.utils.th_utils import get_parameters_num
+from pymarl.utils.rl_utils import build_td_lambda_targets, build_target_q
 import torch as th
-from utils.rl_utils import build_td_lambda_targets, build_target_q
 from torch.optim import Adam
-from modules.mixers.qmix import QMixer
-from utils.th_utils import get_parameters_num
 
 
 class OffPGLearner:

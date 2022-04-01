@@ -2,7 +2,7 @@ from matplotlib.pyplot import xcorr
 import torch as th
 from torch.distributions import Categorical
 from torch.distributions.one_hot_categorical import OneHotCategorical
-from .epsilon_schedules import DecayThenFlatSchedule
+from pymarl.components.epsilon_schedules import DecayThenFlatSchedule
 
 class GumbelSoftmax(OneHotCategorical):
 

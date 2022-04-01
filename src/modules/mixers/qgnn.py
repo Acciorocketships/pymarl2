@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 from functools import partial
-from modules.layer.mixer import Mixer, AggMixer
-from modules.layer.mlp import MLP, layers
-from utils.param_update import update_module_params, get_num_params, batch_linear, LinearHyper, abs_linear
+from pymarl.modules.layer.mixer import Mixer, AggMixer
+from pymarl.modules.layer.mlp import MLP, layers
+from pymarl.utils.param_update import update_module_params, get_num_params, batch_linear, LinearHyper, abs_linear
 
 
 class QGNNMixer(nn.Module):

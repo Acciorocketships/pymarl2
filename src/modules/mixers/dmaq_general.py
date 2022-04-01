@@ -3,7 +3,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from .dmaq_si_weight import DMAQ_SI_Weight
+from pymarl.modules.mixers.dmaq_si_weight import DMAQ_SI_Weight
 
 
 class DMAQer(nn.Module):

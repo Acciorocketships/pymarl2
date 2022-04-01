@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import torch as th
 import numpy as np
 import torch.nn.init as init
-from modules.layer.self_atten import SelfAttention
+from pymarl.modules.layer.self_atten import SelfAttention
 
 class ATTRNNAgent(nn.Module):
     def __init__(self, input_shape, args):

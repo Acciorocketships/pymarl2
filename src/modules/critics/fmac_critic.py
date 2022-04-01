@@ -2,7 +2,7 @@ from numpy.core.numeric import True_
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from modules.layer.self_atten import SelfAttention
+from pymarl.modules.layer.self_atten import SelfAttention
 
 
 class FMACCritic(nn.Module):
