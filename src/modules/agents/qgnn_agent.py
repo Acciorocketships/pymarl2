@@ -65,10 +65,7 @@ class QGNNAgent(nn.Module):
 
 		h = self.rnn(inputs, hidden_state)
 
-		if 'adj' in info:
-			adj = info['adj']
-		else:
-			adj = self.get_adj(adj, batch, n_agents)
+		adj = self.get_adj(info.get('adj', None), batch, n_agents)
 
 		embedding = self.gnn(h, adj)
 

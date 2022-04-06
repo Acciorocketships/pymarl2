@@ -13,7 +13,7 @@ class SelfAttention(nn.Module):
         self.toqueries = nn.Linear(self.input_size, self.emb_size * heads, bias = False)
         self.tovalues = nn.Linear(self.input_size, self.emb_size * heads, bias = False)
 
-    def forward(self, x):
+    def forward(self, x, adj=None):
         b, t, hin = x.size()
         assert hin == self.input_size, f'Input size {{hin}} should match {{self.input_size}}'
         
@@ -35,6 +35,10 @@ class SelfAttention(nn.Module):
 
         dot = torch.bmm(queries, keys.transpose(1, 2))
         assert dot.size() == (b*h, t, t)
+
+        if adj is not None:
+            adj_exp = adj.unsqueeze(1).repeat((1,h,1,1)).view(b*h, t, t)
+            dot[adj_exp==0] = -float('inf')
 
         # row wise self attention probabilities
         dot = F.softmax(dot, dim=2)

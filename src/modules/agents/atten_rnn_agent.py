@@ -24,7 +24,7 @@ class ATTRNNAgent(nn.Module):
         # make hidden states on same device as model
         return self.fc1.weight.new(1, self.args.rnn_hidden_dim).zero_()
 
-    def forward(self, inputs, hidden_state):
+    def forward(self, inputs, hidden_state, info={}):
         # INPUT
         b, a, e = inputs.size()
 
@@ -34,7 +34,7 @@ class ATTRNNAgent(nn.Module):
         h = self.rnn(x, h_in)
 
         # ATT
-        att = self.att(inputs.view(b, a, -1))
+        att = self.att(inputs.view(b, a, -1), adj=info.get('adj', None))
         att = F.relu(self.fc2(att), inplace=True).view(-1, self.args.rnn_hidden_dim)
 
         # Q
