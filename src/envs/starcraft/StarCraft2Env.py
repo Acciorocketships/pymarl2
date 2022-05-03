@@ -1553,4 +1553,4 @@ class StarCraft2Env(MultiAgentEnv):
                     adj[ally_id, agent_id] = 1
             adj[agent_id, agent_id] = 1
         info["adj"] = adj
-        return {}
+        return info

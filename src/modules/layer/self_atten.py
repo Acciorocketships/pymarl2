@@ -37,8 +37,8 @@ class SelfAttention(nn.Module):
         assert dot.size() == (b*h, t, t)
 
         if adj is not None:
-            adj_exp = adj.unsqueeze(1).repeat((1,h,1,1)).view(b*h, t, t)
-            dot[adj_exp==0] = -float('inf')
+            adj_exp = adj.unsqueeze(1).repeat((1,h,1,1)).view(b*h, t, t).transpose(1,2)
+            dot[adj_exp==0] = -1e38 # substitute fo -inf so that softmax works if all elements are -inf (otherwise nan)
 
         # row wise self attention probabilities
         dot = F.softmax(dot, dim=2)

@@ -63,6 +63,12 @@ def layers(input_dim, output_dim, nlayers=1, midmult=1):
 	return list(np.concatenate([layers1, layers2])[1:-1])
 
 
+def build_mlp(input_dim, output_dim, nlayers=1, midmult=1., batchnorm=False, layernorm=False, nonlinearity=nn.ReLU):
+	mlp_layers = layers(input_dim=input_dim, output_dim=output_dim, nlayers=nlayers, midmult=midmult)
+	mlp = MLP(input_dim=input_dim, output_dim=output_dim, layer_sizes=layers, batchnorm=batchnorm, layernorm=layernorm, nonlinearity=nonlinearity)
+	return mlp
+
+
 def select_index(arr, dim, idx):
 	idx_list = [slice(None)] * len(arr.shape)
 	idx_list[dim] = idx

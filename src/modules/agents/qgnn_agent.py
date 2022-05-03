@@ -1,6 +1,6 @@
+import torch
 from torch import nn
 import numpy as np
-# from utils.th_utils import orthogonal_init_
 from torch_geometric.nn import Sequential, EdgeConv, GraphConv
 from pymarl.modules.layer.agggnn import AggGNN, create_agg_gnn
 from pymarl.modules.layer.mlp import MLP
@@ -53,10 +53,10 @@ class QGNNAgent(nn.Module):
 		self.rnn = RNN(input_shape, args)
 
 		# GNNs
-		self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=self.hidden_dim, layernorm=self.use_layernorm)
-
+		self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=input_shape, layernorm=self.use_layernorm)
 		# Q Net
-		self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(self.hidden_dim+self.out_dim)//2], layernorm=self.use_layernorm)
+		self.q_net = MLP(input_dim=input_shape + self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(input_shape + self.hidden_dim + self.out_dim) // 2], layernorm=self.use_layernorm)
+
 
 		
 
@@ -67,8 +67,8 @@ class QGNNAgent(nn.Module):
 
 		adj = self.get_adj(info.get('adj', None), batch, n_agents)
 
-		embedding = self.gnn(h, adj)
-
+		gnn_out = self.gnn(inputs, adj)
+		embedding = torch.cat([h, gnn_out], dim=-1)
 		qvals = self.q_net(embedding)
 
 		return qvals, h
@@ -127,6 +127,15 @@ def gnn_builder(gnn_type='edgeconv', layers=1, dim=64, layernorm=False, **kwargs
 			agggnn_layer = create_agg_gnn(in_dim=dim, out_dim=dim, nlayers=2, midmult=1., layernorm=layernorm, fcom=None,  aggr='mean')
 			gnn_layers.append((agggnn_layer, 'x, edge_index -> x'))
 			if i+1 < layers:
+				gnn_layers.append(nn.ReLU(inplace=True))
+
+	elif gnn_type == 'mha':
+		from pymarl.modules.layer.gnns import MHAconv
+		for i in range(layers):
+			heads = 2
+			mha_layer = MHAconv(input_size=dim, heads=heads, embed_size=dim//heads)
+			gnn_layers.append((mha_layer, 'x, edge_index -> x'))
+			if i + 1 < layers:
 				gnn_layers.append(nn.ReLU(inplace=True))
 	
 	gnn_geometric = Sequential('x, edge_index', gnn_layers)
