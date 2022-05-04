@@ -50,7 +50,7 @@ per_alpha: 0.6
 per_beta: 0.4
 return_priority: False
 
-name: "qgnn_env=8_adam_td_lambda"
+name: "qgnn"
 
 # QMIX params
 mixing_embed_dim: 32

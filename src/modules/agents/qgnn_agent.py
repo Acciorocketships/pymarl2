@@ -53,12 +53,17 @@ class QGNNAgent(nn.Module):
 		self.rnn = RNN(input_shape, args)
 
 		# GNNs
-		self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=input_shape, layernorm=self.use_layernorm)
+		self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=self.hidden_dim, layernorm=self.use_layernorm)
 		# Q Net
-		self.q_net = MLP(input_dim=input_shape + self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(input_shape + self.hidden_dim + self.out_dim) // 2], layernorm=self.use_layernorm)
+		self.q_net = MLP(input_dim=2 * self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(input_shape + self.hidden_dim + self.out_dim) // 2], layernorm=self.use_layernorm)
 
+		# # GNNs
+		# self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=self.hidden_dim, layernorm=self.use_layernorm)
+		# # Q Net
+		# self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim,
+		# 				 layer_sizes=[(self.hidden_dim + self.out_dim) // 2],
+		# 				 layernorm=self.use_layernorm)
 
-		
 
 	def forward(self, inputs, hidden_state, info={}):
 		batch, n_agents, obs_dim = inputs.size()
@@ -67,8 +72,10 @@ class QGNNAgent(nn.Module):
 
 		adj = self.get_adj(info.get('adj', None), batch, n_agents)
 
-		gnn_out = self.gnn(inputs, adj)
+		gnn_out = self.gnn(h, adj)
 		embedding = torch.cat([h, gnn_out], dim=-1)
+		# embedding = self.gnn(h, adj)
+
 		qvals = self.q_net(embedding)
 
 		return qvals, h
