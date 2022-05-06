@@ -57,6 +57,19 @@ class ParallelInfoRunner:
     def get_env_info(self):
         return self.env_info
 
+    def call_env_func(self, methodname, *args, **kwargs):
+        # define new methods in env_worker
+        if len(args) > 0:
+            if len(args) == 1:
+                self.parent_conns[0].send((methodname, args[0]))
+            else:
+                self.parent_conns[0].send((methodname, args))
+        elif len(kwargs) > 0:
+            self.parent_conns[0].send((methodname, kwargs))
+        else:
+            self.parent_conns[0].send((methodname, None))
+        return self.parent_conns[0].recv()
+
     def save_replay(self):
         pass
 
@@ -161,11 +174,13 @@ class ParallelInfoRunner:
 
                     env_terminated = False
                     if data["terminated"]:
-                        final_env_infos.append(data["env_info"])
+                        env_info_scalars = {key: val for (key,val) in data["env_info"].items() if np.array(val).size==1}
+                        final_env_infos.append(env_info_scalars)
                     if data["terminated"] and not data["env_info"].get("episode_limit", False):
                         env_terminated = True
                     terminated[idx] = data["terminated"]
                     post_transition_data["terminated"].append((env_terminated,))
+                    self.add_info(post_transition_data, data["env_info"])
 
                     # Data for the next timestep needed to select an action
                     pre_transition_data["state"].append(data["state"])
@@ -227,23 +242,33 @@ class ParallelInfoRunner:
         stats.clear()
 
 
-    def add_info(self, pre_transition_data, info):
+    def add_info(self, data, info):
         for key, val in info.items():
-            if key not in pre_transition_data:
-                pre_transition_data[key] = []
-            pre_transition_data[key].append(val)
+            if key not in data:
+                data[key] = []
+            data[key].append(val)
 
     def set_info_scheme(self):
         self.parent_conns[0].send(("reset", None))
-        env_data = self.parent_conns[0].recv()
-        info = env_data['info']
-        for key, val in info.items():
-            item_scheme = {}
-            item_scheme['vshape'] = val.shape[1:]
-            if val.shape[0] == self.env_info['n_agents']:
-                item_scheme['group'] = 'agents'
-            item_scheme['dtype'] = numpy_to_torch_dtype(val.dtype)
-            self.info_scheme[key] = item_scheme
+        reset_data = self.parent_conns[0].recv()
+        def add_dict(d):
+            for key, val in d.items():
+                item_scheme = {}
+                val = np.array(val)
+                item_scheme['vshape'] = val.shape[1:]
+                if len(val.shape) > 0:
+                    if val.shape[0] == self.env_info['n_agents']:
+                        item_scheme['group'] = 'agents'
+                item_scheme['dtype'] = numpy_to_torch_dtype(val.dtype)
+                self.info_scheme[key] = item_scheme
+        add_dict(reset_data["info"])
+        try:
+            actions = np.argmax(reset_data["avail_actions"], axis=-1)
+            self.parent_conns[0].send(("step", actions))
+            step_data = self.parent_conns[0].recv()
+            add_dict(step_data["env_info"])
+        except Exception as e:
+            print("Couldn't initialise step info scheme in parallel_info_runner:", e)
 
 
 def env_worker(remote, env_fn):
@@ -288,7 +313,15 @@ def env_worker(remote, env_fn):
         elif cmd == "get_stats":
             remote.send(env.get_stats())
         else:
-            raise NotImplementedError
+            if isinstance(data, tuple):
+                remote.send(getattr(env, cmd)(*data))
+            elif isinstance(data, dict):
+                remote.send(getattr(env, cmd)(**data))
+            elif data is None:
+                remote.send(getattr(env, cmd)())
+            else:
+                remote.send(getattr(env, cmd)(data))
+
 
 
 def numpy_to_torch_dtype(dtype):

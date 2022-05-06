@@ -7,7 +7,7 @@ import torch as th
 from torch.optim import RMSprop
 
 class QLearner:
-    def __init__(self, mac, scheme, logger, args):
+    def __init__(self, mac, scheme, logger, args, **kwargs):
         self.args = args
         self.mac = mac
         self.logger = logger

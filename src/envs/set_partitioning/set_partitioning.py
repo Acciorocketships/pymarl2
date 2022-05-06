@@ -62,12 +62,12 @@ class SetPartitioning(MultiAgentEnv):
 		self.t += 1
 		action = self.rectify_action(action)
 		global_reward = self.get_reward(action)
-		# local_adv, all_rewards = self.local_rewards(action)
+		local_adv, all_rewards = self.local_rewards(action)
 		terminated = np.array([(self.t >= self.episode_limit) for _ in range(self.batch_size)])
 		if not self.batch_mode:
 			global_reward = global_reward[0]
 			terminated = terminated[0]
-		return global_reward, terminated, {}
+		return global_reward, terminated, {"local_rewards": local_adv}
 
 
 	def get_reward(self, action):
@@ -86,10 +86,11 @@ class SetPartitioning(MultiAgentEnv):
 		all_rewards = np.zeros((self.batch_size, self.n_agents, self.n_actions))
 		max_other_rewards = np.zeros((self.batch_size, self.n_agents))
 		for i in range(self.n_agents):
-			old_actioni = action[:,i]
+			# old_actioni = action[:,i]
 			all_rewards[:,i,:] = np.array([self.get_reward(set_element(action, i, j)) for j in range(self.n_actions)]).T
-			max_other_rewards[:,i] = max(np.delete(all_rewards[:,i,:], old_actioni))
-			action[:,i] = old_actioni
+			# max_other_rewards[:,i] = max(np.delete(all_rewards[:,i,:], old_actioni))
+			max_other_rewards[:, i] = max(all_rewards[:, i, :])
+			# action[:,i] = old_actioni
 		return orig_reward - max_other_rewards, all_rewards
 
 	def reset(self):
@@ -152,6 +153,23 @@ class SetPartitioning(MultiAgentEnv):
 
 	def save_replay(self):
 		pass
+
+	def metrics(self, env_data, model_data, **kwargs):
+		metrics = {}
+
+		mask = env_data["filled"][:, :-1].float()
+		local_rewards = env_data['local_rewards'][:, :-1]
+		local_values = model_data["local_q_chosen"]
+		B, T, n_agents = local_rewards.shape
+		local_rewards = local_rewards.view(B * T, n_agents)
+		local_values = local_values.view(B * T, n_agents)
+		sbs = torch.stack([local_rewards, local_values], dim=-1)
+		corrs = np.array([np.corrcoef(sbs[i, :, :], rowvar=False)[0, 1] for i in range(B * T)])
+		corrs = corrs * mask.view(B * T)
+		corr = np.sum(corrs) / np.sum(mask)
+		metrics["local_reward_corr"] = corr
+
+		return metrics
 
 
 if __name__ == '__main__':

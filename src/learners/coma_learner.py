@@ -8,7 +8,7 @@ from torch.optim import Adam
 
 
 class COMALearner:
-    def __init__(self, mac, scheme, logger, args):
+    def __init__(self, mac, scheme, logger, args, **kwargs):
         self.args = args
         self.n_agents = args.n_agents
         self.n_actions = args.n_actions

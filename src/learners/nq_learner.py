@@ -12,10 +12,11 @@ from torch.optim import RMSprop, Adam
 import numpy as np
 
 class NQLearner:
-	def __init__(self, mac, scheme, logger, args):
+	def __init__(self, mac, scheme, logger, args, **kwargs):
 		self.args = args
 		self.mac = mac
 		self.logger = logger
+		self.runner = kwargs.get("runner", None)
 		
 		self.last_target_update_episode = 0
 		self.device = th.device('cuda' if args.use_cuda  else 'cpu')
@@ -74,7 +75,6 @@ class NQLearner:
 
 		# Pick the Q-Values for the actions taken by each agent
 		chosen_action_qvals = th.gather(mac_out[:, :-1], dim=3, index=actions).squeeze(3)  # Remove the last dim
-		chosen_action_qvals_ = chosen_action_qvals
 
 		# Calculate the Q-Values necessary for the target
 		with th.no_grad():
@@ -108,9 +108,9 @@ class NQLearner:
 													self.args.n_agents, self.args.gamma, self.args.td_lambda)
 
 		# Mixer
-		chosen_action_qvals = self.mixer(chosen_action_qvals, batch["state"][:, :-1])
+		global_qvals = self.mixer(chosen_action_qvals, batch["state"][:, :-1])
 
-		td_error = (chosen_action_qvals - targets.detach())
+		td_error = (global_qvals - targets.detach())
 		td_error2 = 0.5 * td_error.pow(2)
 
 		mask = mask.expand_as(td_error2)
@@ -138,9 +138,21 @@ class NQLearner:
 			self.logger.log_stat("grad_norm", grad_norm, t_env)
 			mask_elems = mask.sum().item()
 			self.logger.log_stat("td_error_abs", (masked_td_error.abs().sum().item()/mask_elems), t_env)
-			self.logger.log_stat("q_taken_mean", (chosen_action_qvals * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
-			self.logger.log_stat("target_mean", (targets * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
+			self.logger.log_stat("q_global_mean", (global_qvals * mask).sum().item()/(mask_elems), t_env)
+			self.logger.log_stat("target_global_mean", (targets * mask).sum().item()/(mask_elems), t_env)
+			self.logger.log_stat("q_local_mean", (chosen_action_qvals * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
 			self.log_stats_t = t_env
+
+			if hasattr(self.runner, "call_env_func"):
+				model_data = {
+					"local_q_all": mac_out.detach(),
+					"local_q_chosen": chosen_action_qvals.detach(),
+					"global_q": global_qvals.detach(),
+				}
+				metrics = self.runner.call_env_func("metrics", env_data=batch, model_data=model_data)
+				for key, val in metrics.items():
+					self.logger.log_stat(key, val, t_env)
+
 			
 			# print estimated matrix
 			if self.args.env == "one_step_matrix_game":

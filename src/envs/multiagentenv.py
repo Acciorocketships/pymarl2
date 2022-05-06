@@ -61,3 +61,6 @@ class MultiAgentEnv(object):
                     "n_agents": self.n_agents,
                     "episode_limit": self.episode_limit}
         return env_info
+
+    def metrics(self, data):
+        return {}

@@ -34,6 +34,9 @@ class EpisodeRunner:
     def get_env_info(self):
         return self.env.get_env_info()
 
+    def call_env_function(self, methodname, *args, **kwargs):
+        return getattr(self.env, methodname)(*args, **kwargs)
+
     def save_replay(self):
         self.env.save_replay()
 

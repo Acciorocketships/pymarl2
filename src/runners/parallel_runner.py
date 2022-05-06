@@ -54,6 +54,19 @@ class ParallelRunner:
     def get_env_info(self):
         return self.env_info
 
+    def call_env_func(self, methodname, *args, **kwargs):
+        # define new methods in env_worker
+        if len(args) > 0:
+            if len(args) == 1:
+                self.parent_conns[0].send((methodname, args[0]))
+            else:
+                self.parent_conns[0].send((methodname, args))
+        elif len(kwargs) > 0:
+            self.parent_conns[0].send((methodname, kwargs))
+        else:
+            self.parent_conns[0].send((methodname, None))
+        return self.parent_conns[0].recv()
+
     def save_replay(self):
         pass
 
@@ -260,8 +273,17 @@ def env_worker(remote, env_fn):
             remote.send(env.get_env_info())
         elif cmd == "get_stats":
             remote.send(env.get_stats())
+        elif cmd == "metrics":
+            remote.send(env.metric(**data))
         else:
-            raise NotImplementedError
+            if isinstance(data, tuple):
+                remote.send(getattr(env, cmd)(*data))
+            elif isinstance(data, dict):
+                remote.send(getattr(env, cmd)(**data))
+            elif data is None:
+                remote.send(getattr(env, cmd)())
+            else:
+                remote.send(getattr(env, cmd)(data))
 
 
 class CloudpickleWrapper():

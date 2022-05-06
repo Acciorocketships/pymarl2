@@ -1,5 +1,6 @@
 from pymarl.envs.multiagentenv import MultiAgentEnv
 import numpy as np
+import torch
 
 class EstimateGame(MultiAgentEnv):
 
@@ -81,7 +82,7 @@ class EstimateGame(MultiAgentEnv):
 		if not self.batch_mode:
 			qglobal = qglobal[0].item()
 			terminated = terminated[0]
-		return qglobal, terminated, {}
+		return qglobal, terminated, {"local_rewards": qind}
 
 
 	def reset(self):
@@ -97,7 +98,9 @@ class EstimateGame(MultiAgentEnv):
 
 
 	def get_info(self, batch=0):
-		return {"adj": self.adjacency[batch]}
+		return {
+			"adj": self.adjacency[batch]
+		}
 
 
 	def get_obs(self, batch=0):
@@ -149,6 +152,22 @@ class EstimateGame(MultiAgentEnv):
 
 	def save_replay(self):
 		pass
+
+	def metrics(self, env_data, model_data, **kwargs):
+		metrics = {}
+
+		# mask = env_data["filled"][:, :-1].float().numpy()
+		local_rewards = env_data['local_rewards'][:, :-1]
+		local_values = model_data["local_q_chosen"]
+		B, T, n_agents = local_rewards.shape
+		local_rewards = local_rewards.view(B * T, n_agents)
+		local_values = local_values.view(B * T, n_agents)
+		sbs = torch.stack([local_rewards, local_values], dim=-1)
+		corrs = np.array([np.corrcoef(sbs[i, :, :], rowvar=False)[0, 1] for i in range(B * T)])
+		corr = np.mean(corrs)
+		metrics["local_reward_corr"] = corr
+
+		return metrics
 
 
 
