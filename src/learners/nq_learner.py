@@ -7,16 +7,17 @@ from pymarl.modules.mixers.qgnn import QGNNMixer
 from pymarl.envs.matrix_game import print_matrix_status
 from pymarl.utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
 from pymarl.utils.th_utils import get_parameters_num
+from pymarl.callbacks.callback import Callback
 import torch as th
 from torch.optim import RMSprop, Adam
 import numpy as np
 
 class NQLearner:
-	def __init__(self, mac, scheme, logger, args, **kwargs):
+	def __init__(self, mac, scheme, logger, callback, args, **kwargs):
 		self.args = args
 		self.mac = mac
 		self.logger = logger
-		self.runner = kwargs.get("runner", None)
+		self.callback = callback
 		
 		self.last_target_update_episode = 0
 		self.device = th.device('cuda' if args.use_cuda  else 'cpu')
@@ -143,13 +144,13 @@ class NQLearner:
 			self.logger.log_stat("q_local_mean", (chosen_action_qvals * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
 			self.log_stats_t = t_env
 
-			if hasattr(self.runner, "call_env_func"):
+			if type(self.callback).metrics != Callback.metrics:
 				model_data = {
 					"local_q_all": mac_out.detach(),
 					"local_q_chosen": chosen_action_qvals.detach(),
 					"global_q": global_qvals.detach(),
 				}
-				metrics = self.runner.call_env_func("metrics", env_data=batch, model_data=model_data)
+				metrics = self.callback.metrics(env_data=batch, model_data=model_data)
 				for key, val in metrics.items():
 					self.logger.log_stat(key, val, t_env)
 

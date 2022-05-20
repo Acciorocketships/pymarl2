@@ -16,7 +16,7 @@ class FFAgent(nn.Module):
         # make hidden states on same device as model
         return self.fc1.weight.new(1, self.args.rnn_hidden_dim).zero_()
 
-    def forward(self, inputs, hidden_state):
+    def forward(self, inputs, hidden_state, **kwargs):
         x = F.relu(self.fc1(inputs))
         # h_in = hidden_state.reshape(-1, self.args.rnn_hidden_dim)
         h = F.relu(self.fc2(x))

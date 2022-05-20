@@ -1,13 +1,13 @@
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.mixers.vdn import VDNMixer
-from modules.mixers.qmix import QMixer
-from modules.mixers.graphmix import GraphMixer
+from pymarl.components.episode_buffer import EpisodeBatch
+from pymarl.modules.mixers.vdn import VDNMixer
+from pymarl.modules.mixers.qmix import QMixer
+from pymarl.modules.mixers.graphmix import GraphMixer
 import torch as th
 from torch.optim import RMSprop
 
 class QLearner:
-    def __init__(self, mac, scheme, logger, args, **kwargs):
+    def __init__(self, mac, scheme, logger, callback, args, **kwargs):
         self.args = args
         self.mac = mac
         self.logger = logger

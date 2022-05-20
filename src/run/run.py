@@ -5,15 +5,16 @@ import time
 import threading
 import torch as th
 from types import SimpleNamespace as SN
-from utils.logging import Logger
-from utils.timehelper import time_left, time_str
+from pymarl.utils.logging import Logger
+from pymarl.utils.timehelper import time_left, time_str
 from os.path import dirname, abspath
 
-from learners import REGISTRY as le_REGISTRY
-from runners import REGISTRY as r_REGISTRY
-from controllers import REGISTRY as mac_REGISTRY
-from components.episode_buffer import ReplayBuffer
-from components.transforms import OneHot
+from pymarl.learners import REGISTRY as le_REGISTRY
+from pymarl.runners import REGISTRY as r_REGISTRY
+from pymarl.controllers import REGISTRY as mac_REGISTRY
+from pymarl.callbacks import REGISTRY as cb_REGISTRY
+from pymarl.components.episode_buffer import ReplayBuffer
+from pymarl.components.transforms import OneHot
 
 from smac.env import StarCraft2Env
 
@@ -84,6 +85,8 @@ def run_sequential(args, logger):
     # Init runner so we can get env info
     runner = r_REGISTRY[args.runner](args=args, logger=logger)
 
+    callback = cb_REGISTRY[args.callback]()
+
     # Set up schemes and groups here
     env_info = runner.get_env_info()
     args.n_agents = env_info["n_agents"]
@@ -124,7 +127,7 @@ def run_sequential(args, logger):
     runner.setup(scheme=scheme, groups=groups, preprocess=preprocess, mac=mac)
 
     # Learner
-    learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args, runner=runner)
+    learner = le_REGISTRY[args.learner](mac=mac, scheme=buffer.scheme, logger=logger, callback=callback, args=args)
 
     if args.use_cuda:
         learner.cuda()

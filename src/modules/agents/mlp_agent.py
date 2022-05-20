@@ -16,7 +16,7 @@ class MLPAgent(nn.Module):
     def init_hidden(self):
         return None
 
-    def forward(self, inputs, h=None):
+    def forward(self, inputs, h=None, **kwargs):
         x = F.relu(self.fc1(inputs))
         x = F.relu(self.fc2(x))
         if self.agent_return_logits:

@@ -4,6 +4,7 @@ from pymarl.controllers.basic_controller import BasicMAC
 from pymarl.utils.rl_utils import RunningMeanStd
 import torch as th
 import numpy as np
+from torch_geometric.data import Batch
 
 # This multi-agent controller shares parameters between agents and includes the info dict from the environment
 class InfoMAC(BasicMAC):
@@ -19,7 +20,11 @@ class InfoMAC(BasicMAC):
         return chosen_actions
 
     def build_info(self, batch, t):
-        return {key: val[:,t] for key, val in batch.data.transition_data.items() if key not in self.existing_keys}
+        info = {key: val[:,t] for key, val in batch.data.transition_data.items() if key not in self.existing_keys}
+        for key, val in info.items():
+            if isinstance(val, np.ndarray) and val.dtype=='object':
+                info[key] = Batch.from_data_list(val)
+        return info
 
     def forward(self, ep_batch, t, test_mode=False):
         if test_mode:

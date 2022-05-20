@@ -6,7 +6,7 @@ from torch.optim import RMSprop, Adam
 
 
 class QLearner:
-    def __init__(self, mac, scheme, logger, args, **kwargs):
+    def __init__(self, mac, scheme, logger, callback, args, **kwargs):
         self.args = args
         self.mac = mac
         self.logger = logger

@@ -18,7 +18,7 @@ class ConvAgent(nn.Module):
     def init_hidden(self):
         return None
 
-    def forward(self, inputs, hidden_state=None):
+    def forward(self, inputs, hidden_state=None, **kwargs):
         b, t, a, c = inputs.size()
         inputs = inputs.permute(0, 2, 3, 1).reshape(-1, c, t)
         

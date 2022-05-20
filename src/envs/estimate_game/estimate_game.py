@@ -1,6 +1,8 @@
 from pymarl.envs.multiagentenv import MultiAgentEnv
 import numpy as np
 import torch
+from torch_geometric.data import Data
+from torch_geometric.utils import dense_to_sparse
 
 class EstimateGame(MultiAgentEnv):
 
@@ -69,6 +71,8 @@ class EstimateGame(MultiAgentEnv):
 			actions = actions[None,:]
 		assert actions.shape[0] == self.batch_size and actions.shape[1] == self.n_agents, "incorrect actions dimensions"
 		# actions: batch x n_agents x 1
+		if isinstance(actions, torch.Tensor):
+			actions = actions.cpu()
 		return np.array(actions)[:,:,None]
 
 
@@ -98,8 +102,16 @@ class EstimateGame(MultiAgentEnv):
 
 
 	def get_info(self, batch=0):
+
+		adj = self.adjacency[batch]
+		# if len(adj.shape) == 2:
+		# 	coo = dense_to_sparse(torch.tensor(adj))[0]
+		# 	adj_sparse = Data(edge_index=coo, num_nodes=adj.shape[-1])
+		# elif len(adj.shape) == 3:
+		# 	adj_sparse = [Data(edge_index=dense_to_sparse(torch.tensor(adj[i]))[0], num_nodes=adj.shape[-1]) for i in range(adj.shape[0])]
 		return {
-			"adj": self.adjacency[batch]
+			"adj": adj,
+			# "adj": adj_sparse,
 		}
 
 
@@ -152,22 +164,6 @@ class EstimateGame(MultiAgentEnv):
 
 	def save_replay(self):
 		pass
-
-	def metrics(self, env_data, model_data, **kwargs):
-		metrics = {}
-
-		# mask = env_data["filled"][:, :-1].float().numpy()
-		local_rewards = env_data['local_rewards'][:, :-1]
-		local_values = model_data["local_q_chosen"]
-		B, T, n_agents = local_rewards.shape
-		local_rewards = local_rewards.view(B * T, n_agents)
-		local_values = local_values.view(B * T, n_agents)
-		sbs = torch.stack([local_rewards, local_values], dim=-1)
-		corrs = np.array([np.corrcoef(sbs[i, :, :], rowvar=False)[0, 1] for i in range(B * T)])
-		corr = np.mean(corrs)
-		metrics["local_reward_corr"] = corr
-
-		return metrics
 
 
 

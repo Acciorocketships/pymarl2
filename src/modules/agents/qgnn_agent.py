@@ -5,6 +5,8 @@ from torch_geometric.nn import Sequential, EdgeConv, GraphConv
 from pymarl.modules.layer.agggnn import AggGNN, create_agg_gnn
 from pymarl.modules.layer.mlp import MLP
 from pymarl.modules.layer.gnn_wrapper import GNNwrapper
+from torch_geometric.data import Data
+from torch_geometric import utils
 
 
 
@@ -18,9 +20,7 @@ class RNN(nn.Module):
 
 		if getattr(args, "model_use_layernorm", False):
 			self.layer_norm = nn.LayerNorm(args.rnn_hidden_dim)
-		
-		# if getattr(args, "use_orthogonal", False):
-		#     orthogonal_init_(self.fc1)
+
 
 	def init_hidden(self):
 		# make hidden states on same device as model
@@ -57,24 +57,17 @@ class QGNNAgent(nn.Module):
 		# Q Net
 		self.q_net = MLP(input_dim=2 * self.hidden_dim, output_dim=self.out_dim, layer_sizes=[(input_shape + self.hidden_dim + self.out_dim) // 2], layernorm=self.use_layernorm)
 
-		# # GNNs
-		# self.gnn = gnn_builder(gnn_type=self.model_gnn_type, layers=self.model_gnn_layers, dim=self.hidden_dim, layernorm=self.use_layernorm)
-		# # Q Net
-		# self.q_net = MLP(input_dim=self.hidden_dim, output_dim=self.out_dim,
-		# 				 layer_sizes=[(self.hidden_dim + self.out_dim) // 2],
-		# 				 layernorm=self.use_layernorm)
-
 
 	def forward(self, inputs, hidden_state, info={}):
 		batch, n_agents, obs_dim = inputs.size()
 
 		h = self.rnn(inputs, hidden_state)
 
-		adj = self.get_adj(info.get('adj', None), batch, n_agents)
-
+		adj_raw = info.get('adj', None)
+		adj = self.get_adj(adj_raw, batch, n_agents)
 		gnn_out = self.gnn(h, adj)
+
 		embedding = torch.cat([h, gnn_out], dim=-1)
-		# embedding = self.gnn(h, adj)
 
 		qvals = self.q_net(embedding)
 
@@ -83,25 +76,33 @@ class QGNNAgent(nn.Module):
 
 
 	def get_adj(self, adj, batch, n_agents):
-		if adj is not None:
-			adj = adj.reshape(batch, n_agents, n_agents)
+		if isinstance(adj, Data):
+			adj.edge_index = utils.add_self_loops(adj.edge_index)[0]
+			if self.adj_dropout != 0:
+				adj.edge_index = utils.dropout_adj(adj.edge_index, p=self.adj_dropout)[0]
+			return adj
 		else:
-			adj = np.ones((batch, n_agents, n_agents))
-		if self.adj_dropout != 0:
-			if self.adj_dropout == 1:
-				adj = np.eye(n_agents)[np.newaxis].repeat(batch, axis=0)
-			elif self.adj_dropout == None:
-				adj = np.zeros(batch, n_agents, n_agents)
+			if adj is not None:
+				adj = adj.reshape(batch, n_agents, n_agents)
 			else:
-				edges = adj.nonzero()
-				n_edges = len(edges[0])
-				mask = np.random.rand(n_edges) < self.adj_dropout
-				dropped_edges = tuple([dim[mask] for dim in edges])
-				adj[dropped_edges] = 0
-				diag = adj.diagonal(axis1=-2, axis2=-1)
-				diag.setflags(write=True)
-				diag.fill(1)
-		return adj
+				adj = np.ones((batch, n_agents, n_agents))
+			if self.adj_dropout != 0:
+				if self.adj_dropout == 1:
+					adj = np.eye(n_agents)[np.newaxis].repeat(batch, axis=0)
+				elif self.adj_dropout == None:
+					adj = np.zeros(batch, n_agents, n_agents)
+				else:
+					edges = adj.nonzero()
+					n_edges = len(edges[0])
+					mask = np.random.rand(n_edges) < self.adj_dropout
+					dropped_edges = tuple([dim[mask] for dim in edges])
+					adj[dropped_edges] = 0
+			if isinstance(adj, torch.Tensor):
+				adj = adj.cpu().numpy()
+			diag = adj.diagonal(axis1=-2, axis2=-1)
+			diag.setflags(write=True)
+			diag.fill(1)
+			return adj
 
 
 

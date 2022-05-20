@@ -89,7 +89,7 @@ class SetPartitioning(MultiAgentEnv):
 			# old_actioni = action[:,i]
 			all_rewards[:,i,:] = np.array([self.get_reward(set_element(action, i, j)) for j in range(self.n_actions)]).T
 			# max_other_rewards[:,i] = max(np.delete(all_rewards[:,i,:], old_actioni))
-			max_other_rewards[:, i] = max(all_rewards[:, i, :])
+			max_other_rewards[:, i] = np.max(all_rewards[:, i, :], axis=-1)
 			# action[:,i] = old_actioni
 		return orig_reward - max_other_rewards, all_rewards
 
@@ -153,23 +153,6 @@ class SetPartitioning(MultiAgentEnv):
 
 	def save_replay(self):
 		pass
-
-	def metrics(self, env_data, model_data, **kwargs):
-		metrics = {}
-
-		mask = env_data["filled"][:, :-1].float()
-		local_rewards = env_data['local_rewards'][:, :-1]
-		local_values = model_data["local_q_chosen"]
-		B, T, n_agents = local_rewards.shape
-		local_rewards = local_rewards.view(B * T, n_agents)
-		local_values = local_values.view(B * T, n_agents)
-		sbs = torch.stack([local_rewards, local_values], dim=-1)
-		corrs = np.array([np.corrcoef(sbs[i, :, :], rowvar=False)[0, 1] for i in range(B * T)])
-		corrs = corrs * mask.view(B * T)
-		corr = np.sum(corrs) / np.sum(mask)
-		metrics["local_reward_corr"] = corr
-
-		return metrics
 
 
 if __name__ == '__main__':

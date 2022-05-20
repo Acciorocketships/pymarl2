@@ -3,6 +3,8 @@ import numpy as np
 from types import SimpleNamespace as SN
 from pymarl.components.segment_tree import SumSegmentTree, MinSegmentTree
 import random
+from torch_geometric.data import Data
+
 class EpisodeBatch:
     def __init__(self,
                  scheme,
@@ -17,7 +19,7 @@ class EpisodeBatch:
         self.batch_size = batch_size
         self.max_seq_length = max_seq_length
         self.preprocess = {} if preprocess is None else preprocess
-        self.device = device
+        self.device = device # TODO: store on cpu
 
         if data is not None:
             self.data = data
@@ -63,6 +65,14 @@ class EpisodeBatch:
             if isinstance(vshape, int):
                 vshape = (vshape,)
 
+            if dtype == Data:
+                # self.data.transition_data[field_key] = np.array([[Data(x=th.zeros(0,*vshape[0]), edge_index=th.zeros(2,0), edge_attr=th.zeros(0,*vshape[1])) for t in range(max_seq_length)] for b in range(batch_size)])
+                if episode_const:
+                    self.data.episode_data[field_key] = np.empty((batch_size,), dtype=object)
+                else:
+                    self.data.transition_data[field_key] = np.empty((batch_size, max_seq_length), dtype=object)
+                continue
+            
             if group:
                 assert group in groups, "Group {} must have its number of members defined in _groups_".format(group)
                 shape = (groups[group], *vshape)
@@ -79,9 +89,15 @@ class EpisodeBatch:
 
     def to(self, device):
         for k, v in self.data.transition_data.items():
-            self.data.transition_data[k] = v.to(device)
+            if isinstance(v, th.Tensor):
+                self.data.transition_data[k] = v.to(device)
+            if isinstance(v, np.ndarray) and v.dtype==object:
+                list(map(lambda x: x.to(device), v.reshape((-1,))))
         for k, v in self.data.episode_data.items():
-            self.data.episode_data[k] = v.to(device)
+            if isinstance(v, th.Tensor):
+                self.data.episode_data[k] = v.to(device)
+            if isinstance(v, np.ndarray) and v.dtype==object:
+                list(map(lambda x: x.to(device), v.reshape((-1,))))
         self.device = device
 
     def update(self, data, bs=slice(None), ts=slice(None), mark_filled=True):
@@ -99,17 +115,26 @@ class EpisodeBatch:
             else:
                 raise KeyError("{} not found in transition or episode data".format(k))
 
-            dtype = self.scheme[k].get("dtype", th.float32)
-            v = th.tensor(v, dtype=dtype, device=self.device)
-            self._check_safe_view(v, target[k][_slices])
-            target[k][_slices] = v.view_as(target[k][_slices])
+            if isinstance(v[0], Data):
+                list(map(lambda x: x.to(self.device), v.tolist() if isinstance(v, np.ndarray) else v))
+                target[k][tuple(_slices)] = [[e] for e in v]
+            elif isinstance(v, np.ndarray) and len(v.shape) == 2 and isinstance(v[0,0], Data):
+                list(map(lambda x: x.to(self.device), v.reshape((-1,))))
+                target[k][tuple(_slices)] = v
+            else:
+                dtype = self.scheme[k].get("dtype", th.float32)
+                if isinstance(v, np.ndarray):
+                    v = np.array(v)
+                v = th.tensor(v, dtype=dtype, device=self.device)
+                self._check_safe_view(v, target[k][_slices])
+                target[k][_slices] = v.view_as(target[k][_slices])
 
-            if k in self.preprocess:
-                new_k = self.preprocess[k][0]
-                v = target[k][_slices]
-                for transform in self.preprocess[k][1]:
-                    v = transform.transform(v)
-                target[new_k][_slices] = v.view_as(target[new_k][_slices])
+                if k in self.preprocess:
+                    new_k = self.preprocess[k][0]
+                    v = target[k][_slices]
+                    for transform in self.preprocess[k][1]:
+                        v = transform.transform(v)
+                    target[new_k][_slices] = v.view_as(target[new_k][_slices])
 
     def _check_safe_view(self, v, dest):
         idx = len(v.shape) - 1
@@ -192,7 +217,7 @@ class EpisodeBatch:
             else:
                 # Leave slices and lists as is
                 parsed.append(item)
-        return parsed
+        return tuple(parsed)
 
     def max_t_filled(self):
         return th.sum(self.data.transition_data["filled"], 1).max(0)[0]

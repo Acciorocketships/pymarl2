@@ -12,7 +12,7 @@ IAC and VDNs, this class should use ppo agents and ppo mac
 """
 
 class PGLearner_v2:
-    def __init__(self, mac, scheme, logger, args, **kwargs):
+    def __init__(self, mac, scheme, logger, callback, args, **kwargs):
         self.args = args
         self.n_agents = args.n_agents
         self.n_actions = args.n_actions

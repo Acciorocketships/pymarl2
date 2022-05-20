@@ -16,7 +16,11 @@ class GNNwrapper(nn.Module):
 
 	def forward(self, X, A):
 		B, n_agents, _ = X.shape
-		data = to_geometric(A, x=X).to(X.device)
+		if isinstance(A, Batch):
+			data = A
+			data.x = X.reshape(B*n_agents, -1)
+		else:
+			data = to_geometric(A, x=X).to(X.device)
 		output = self.gnn(**self.input_func(data))
 
 		return output.reshape(B, n_agents, -1)

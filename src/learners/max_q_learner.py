@@ -11,7 +11,7 @@ from collections import deque
 from pymarl.controllers import REGISTRY as mac_REGISTRY
 
 class MAXQLearner:
-    def __init__(self, mac, scheme, logger, args, **kwargs):
+    def __init__(self, mac, scheme, logger, callback, args, **kwargs):
         self.args = args
         self.mac = mac
         self.logger = logger

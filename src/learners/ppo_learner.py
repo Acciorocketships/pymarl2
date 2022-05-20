@@ -8,7 +8,7 @@ import torch as th
 from torch.optim import Adam
 
 class PPOLearner:
-    def __init__(self, mac, scheme, logger, args, **kwargs):
+    def __init__(self, mac, scheme, logger, callback, args, **kwargs):
         self.args = args
         self.n_agents = args.n_agents
         self.n_actions = args.n_actions
