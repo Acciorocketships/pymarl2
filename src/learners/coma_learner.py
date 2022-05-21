@@ -62,7 +62,7 @@ class COMALearner:
         mac_out = mac_out/mac_out.sum(dim=-1, keepdim=True)
         mac_out[avail_actions == 0] = 0
 
-        # Calculated baseline
+        # Calculated baseline (weighted sum of global qvals, weighted by prob of taking that action)
         q_vals = q_vals.reshape(-1, self.n_actions)
         pi = mac_out.view(-1, self.n_actions)
         baseline = (pi * q_vals).sum(-1).detach()
@@ -80,6 +80,8 @@ class COMALearner:
         dist_entropy = Categorical(pi).entropy().view(-1)
         dist_entropy[mask == 0] = 0 # fill nan
         entropy_loss = (dist_entropy * mask).sum() / mask.sum()
+
+        breakpoint()
 
         # Optimise agents
         self.agent_optimiser.zero_grad()

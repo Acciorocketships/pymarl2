@@ -3,6 +3,7 @@ from functools import partial
 from pymarl.components.episode_buffer import EpisodeBatch
 from multiprocessing import Pipe, Process
 import numpy as np
+import torch
 from torch_geometric.data import Data
 
 
@@ -280,7 +281,15 @@ def env_worker(remote, env_fn):
     # Make environment
     env = env_fn.x()
     while True:
-        cmd, data = remote.recv()
+        recv = remote.recv()
+        reset_state = False
+        if len(recv) == 2:
+            cmd, data = recv
+        elif len(recv) == 3:
+            cmd, data, reset_state = recv
+        if reset_state:
+            np_rand_state = np.random.get_state()
+            torch_rand_state = torch.random.get_rng_state()
         if cmd == "step":
             actions = data
             # Take a step in the environment
@@ -317,8 +326,6 @@ def env_worker(remote, env_fn):
             remote.send(env.get_env_info())
         elif cmd == "get_stats":
             remote.send(env.get_stats())
-        elif cmd == "metrics":
-            remote.send(env.metric(**data))
         else:
             if isinstance(data, tuple):
                 remote.send(getattr(env, cmd)(*data))
@@ -328,9 +335,12 @@ def env_worker(remote, env_fn):
                 remote.send(getattr(env, cmd)())
             else:
                 remote.send(getattr(env, cmd)(data))
+        if reset_state:
+            np.random.set_state(np_rand_state)
+            torch.random.set_rng_state(torch_rand_state)
 
 def numpy_to_torch_dtype(dtype):
-    return th.tensor(np.empty(0, dtype=dtype)).dtype
+    return torch.tensor(np.empty(0, dtype=dtype)).dtype
 
 class CloudpickleWrapper():
     """
