@@ -13,7 +13,11 @@
 ```bash
 python experiments.py --env [env_name] --config [method_name]
 ```
-Use experiments.py to run any environment with any method. For example, to run qgnn on the set partitioning problem, run `python experiments.py --env qgnn --config set`. 
+Use experiments.py to run any environment with any method. For example, to run qgnn on the set partitioning problem, run `python experiments.py --env qgnn --config set`. To specify more parameters, add arguments `--params1`, `params2`, etc. For example, to run qmix on the 1o_10b_vs_1r starcraft environment, run `python experiments.py --env sc2 --config qmix --params1 env_args.map_name=10_10b_vs_1r`. If multiple arguments are given after `--paramsi`, then multiple runs will be executed sequentially, one with each config param. For example, the command `python experiments.py --env estimate --config qgnn --params1 agent=qgnn agent=n_rnn --params2 mixer=qmix mixer=qgnn` will execute 4 runs with architectures (model=qgnn, mixer=qmix), (model=qgnn, mixer=qgnn), (model=n_rnn, mixer=qmix), and (model=n_rnn, mixer=qgnn).
+
+## QGNN Architecture
+
+![QGNN Architecture](https://i.ibb.co/sP53zdz/Screenshot-2022-05-27-at-22-58-37.png)
 
 
 # PyMARL2 (Original Documentation)
