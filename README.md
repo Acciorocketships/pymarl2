@@ -19,6 +19,8 @@ Use experiments.py to run any environment with any method. For example, to run q
 
 ![QGNN Architecture](https://i.ibb.co/sP53zdz/Screenshot-2022-05-27-at-22-58-37.png)
 
+For more information, see our paper [QGNN: Value Function Factorisation with Graph Neural Networks](https://arxiv.org/abs/2205.13005)
+
 
 # PyMARL2 (Original Documentation)
 Open-source code for [Rethinking the Implementation Tricks and Monotonicity Constraint in Cooperative Multi-Agent Reinforcement Learning](https://arxiv.org/abs/2102.03479).
