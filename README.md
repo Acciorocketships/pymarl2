@@ -1,10 +1,19 @@
 # PyMARL2 (Updates)
 
 ## New Features
-- Parallel Info Runner. Like the Parallel Runner, but it collects info from the environment. There are two ways to send info from the environment. If it is pre-transition info (for example, an Adj Matrix which is needed by a model), then implement the environment's info = get_info() function. If it is post-transition info (for example, useful metrics), then return it in the info output of step().
-- Info Mac. A modified version of n_mac which provides info to the model.
-- Callbacks. The user can implement their own callback class. So far, the only method is metrics(), which is called in the learner with frequency of args.learner_log_interval. However, this can be extended in the future. To use a callback, implement a custom class that inherits from Callback, and set callback=custom_callback in the config.
-- Sparse Support. It is now possible to include torch_geometric.data.Data objects in the environment's info dict. These sparse data objects are combined (over environments and timesteps) in the background, and can be accessed in the model or metrics callback, like any other info.
+- **Parallel Info Runner**. Like the Parallel Runner, but it collects info from the environment. There are two ways to send info from the environment. If it is pre-transition info (for example, an Adj Matrix which is needed by a model), then implement the environment's info = get_info() function. If it is post-transition info (for example, useful metrics), then return it in the info output of step().
+- **Info Mac**. A modified version of n_mac which provides info to the model.
+- **Callbacks**. The user can implement their own callback class. So far, the only method is metrics(), which is called in the learner with frequency of args.learner_log_interval. However, this can be extended in the future. To use a callback, implement a custom class that inherits from Callback, and set callback=custom_callback in the config.
+- **Sparse Support**. It is now possible to include torch_geometric.data.Data objects in the environment's info dict. These sparse data objects are combined (over environments and timesteps) in the background, and can be accessed in the model or metrics callback, like any other info.
+- **QGNN**. A GNN-based value factorisation method.
+- **Environments**. Introduced two new environments: The Estimate Game, and the Set Partitioning Problem.
+
+## How to Run
+
+```bash
+python experiments.py --env [env_name] --config [method_name]
+```
+Use experiments.py to run any environment with any method. For example, to run qgnn on the set partitioning problem, run `python experiments.py --env qgnn --config set`. 
 
 
 # PyMARL2 (Original Documentation)
