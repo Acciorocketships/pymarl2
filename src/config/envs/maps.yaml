@@ -1,0 +1,22 @@
+env: maps
+
+env_args:
+  map_name: null
+  batch_size: 16
+  device: "cpu"
+  continuous: False
+  max_steps: 1000
+
+test_greedy: True
+test_nepisode: 1
+test_interval: 1000
+log_interval: 1000
+runner_log_interval: 1000
+learner_log_interval: 1000
+t_max: 1000000
+
+save_replay: True
+
+obs_agent_id: False
+obs_last_action: False
+rnn_hidden_dim: 8

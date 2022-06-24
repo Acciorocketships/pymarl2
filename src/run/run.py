@@ -16,12 +16,6 @@ from pymarl.callbacks import REGISTRY as cb_REGISTRY
 from pymarl.components.episode_buffer import ReplayBuffer
 from pymarl.components.transforms import OneHot
 
-from smac.env import StarCraft2Env
-
-def get_agent_own_state_size(env_args):
-    sc_env = StarCraft2Env(**env_args)
-    # qatten parameter setting (only use in qatten)
-    return  4 + sc_env.shield_bits_ally + sc_env.unit_type_bits
 
 def run(_run, _config, _log):
 
@@ -47,9 +41,8 @@ def run(_run, _config, _log):
         tb_logs_direc = os.path.join(dirname(dirname(dirname(abspath(__file__)))), "results", "tb_logs")
         tb_exp_direc = os.path.join(tb_logs_direc, "{}").format(unique_token)
         logger.setup_tb(tb_exp_direc)
-
-    # sacred is on by default
-    logger.setup_sacred(_run)
+    if args.wandb:
+        logger.setup_wandb(args)
 
     # Run and train
     run_sequential(args=args, logger=logger)
@@ -74,9 +67,6 @@ def evaluate_sequential(args, runner):
 
     for _ in range(args.test_nepisode):
         runner.run(test_mode=True)
-
-    if args.save_replay:
-        runner.save_replay()
 
     runner.close_env()
 
@@ -161,7 +151,7 @@ def run_sequential(args, logger):
         learner.load_models(model_path)
         runner.t_env = timestep_to_load
 
-        if args.evaluate or args.save_replay:
+        if args.evaluate:
             evaluate_sequential(args, runner)
             return
 
@@ -204,7 +194,6 @@ def run_sequential(args, logger):
         # Execute test runs once in a while
         n_test_runs = max(1, args.test_nepisode // runner.batch_size)
         if (runner.t_env - last_test_T) / args.test_interval >= 1.0:
-
             logger.console_logger.info("t_env: {} / {}".format(runner.t_env, args.t_max))
             logger.console_logger.info("Estimated time left: {}. Time passed: {}".format(
                 time_left(last_time, last_test_T, runner.t_env, args.t_max), time_str(time.time() - start_time)))
@@ -250,3 +239,10 @@ def args_sanity_check(config, _log):
         config["test_nepisode"] = (config["test_nepisode"]//config["batch_size_run"]) * config["batch_size_run"]
 
     return config
+
+
+def get_agent_own_state_size(env_args):
+    from smac.env import StarCraft2Env
+    sc_env = StarCraft2Env(**env_args)
+    # qatten parameter setting (only use in qatten)
+    return  4 + sc_env.shield_bits_ally + sc_env.unit_type_bits

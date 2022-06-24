@@ -42,6 +42,8 @@ def run(_run, _config, _log):
         tb_logs_direc = os.path.join(dirname(dirname(dirname(abspath(__file__)))), "results", "tb_logs")
         tb_exp_direc = os.path.join(tb_logs_direc, "{}").format(unique_token)
         logger.setup_tb(tb_exp_direc)
+    if args.wandb:
+        logger.setup_wandb(args)
 
     # sacred is on by default
     logger.setup_sacred(_run)
@@ -69,9 +71,6 @@ def evaluate_sequential(args, runner):
 
     for _ in range(args.test_nepisode):
         runner.run(test_mode=True)
-
-    if args.save_replay:
-        runner.save_replay()
 
     runner.close_env()
 
@@ -160,7 +159,7 @@ def run_sequential(args, logger):
         learner.load_models(model_path)
         runner.t_env = timestep_to_load
 
-        if args.evaluate or args.save_replay:
+        if args.evaluate:
             evaluate_sequential(args, runner)
             return
 

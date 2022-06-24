@@ -67,6 +67,9 @@ class SetPartitioning(MultiAgentEnv):
 		if not self.batch_mode:
 			global_reward = global_reward[0]
 			terminated = terminated[0]
+		# global_reward: (batch)
+		# terminated: (batch)
+		# local_adv: (batch x n_agents)
 		return global_reward, terminated, {"local_rewards": local_adv}
 
 
@@ -75,8 +78,8 @@ class SetPartitioning(MultiAgentEnv):
 								np.take_along_axis(self.reward_mat[b,:,:], action[b,:,:], axis=-1)[action[b,:,:]==a])
 							for a in range(self.n_actions)] for b in range(self.batch_size)])
 		rew = self.coalition_func_full(loc_rew)
+		# rew: (batch)
 		return rew
-
 
 	def local_rewards(self, action):
 		def set_element(arr, idx, val):
@@ -86,12 +89,9 @@ class SetPartitioning(MultiAgentEnv):
 		all_rewards = np.zeros((self.batch_size, self.n_agents, self.n_actions))
 		max_other_rewards = np.zeros((self.batch_size, self.n_agents))
 		for i in range(self.n_agents):
-			# old_actioni = action[:,i]
 			all_rewards[:,i,:] = np.array([self.get_reward(set_element(action, i, j)) for j in range(self.n_actions)]).T
-			# max_other_rewards[:,i] = max(np.delete(all_rewards[:,i,:], old_actioni))
 			max_other_rewards[:, i] = np.max(all_rewards[:, i, :], axis=-1)
-			# action[:,i] = old_actioni
-		return orig_reward - max_other_rewards, all_rewards
+		return orig_reward[:,None] - max_other_rewards, all_rewards
 
 	def reset(self):
 		if self.reset_characteristic or self.reward_mat is None:
@@ -110,6 +110,7 @@ class SetPartitioning(MultiAgentEnv):
 		if not self.batch_mode:
 			return self.get_obs_agent(agent_id=slice(None), batch=batch)
 		else:
+			# obs: (batch x n_agents x obs_size)
 			return self.get_obs_agent(agent_id=slice(None))
 
 	def get_obs_agent(self, agent_id=slice(None), batch=slice(None)):
@@ -118,7 +119,8 @@ class SetPartitioning(MultiAgentEnv):
 	def get_obs_size(self):
 		return self.n_actions
 
-	def get_info(self, batch=0):
+	def get_info(self, batch=slice(None)):
+		# adj: (batch x n_agents x n_agents)
 		return {"adj": self.adj[batch]}
 
 	def get_state(self, batch=slice(None)):
@@ -134,13 +136,11 @@ class SetPartitioning(MultiAgentEnv):
 		if not self.batch_mode:
 			return self.get_avail_agent_actions(agent_id=slice(None), batch=batch)
 		else:
+			# avail_actions: (batch x n_agents x n_actions)
 			return self.get_avail_agent_actions(agent_id=slice(None))
 
 	def get_total_actions(self):
 		return self.n_actions
-
-	def get_stats(self):
-		return {}
 
 	def close(self):
 		pass

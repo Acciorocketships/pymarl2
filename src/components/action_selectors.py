@@ -135,6 +135,10 @@ class EpsilonGreedyActionSelector():
         
         random_numbers = th.rand_like(agent_inputs[:, :, 0])
         pick_random = (random_numbers < self.epsilon).long()
+
+        # When all actions are 0, set them to 1 to avoid error with Categorical sampling
+        avail_actions[(avail_actions.sum(dim=-1)==0).unsqueeze(-1).expand(-1,-1,avail_actions.shape[-1])] = 1
+
         random_actions = Categorical(avail_actions.float()).sample().long()
 
         picked_actions = pick_random * random_actions + (1 - pick_random) * masked_q_values.max(dim=2)[1]

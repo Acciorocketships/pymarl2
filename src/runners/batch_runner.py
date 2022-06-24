@@ -1,7 +1,10 @@
-from envs import REGISTRY as env_REGISTRY
-from functools import partial
-from pymarl.components.episode_buffer import EpisodeBatch
 import numpy as np
+import torch
+from functools import partial
+from torch_geometric.data import Data
+from pymarl.envs import REGISTRY as env_REGISTRY
+from pymarl.components.episode_buffer import EpisodeBatch
+
 
 
 class BatchRunner:
@@ -14,8 +17,12 @@ class BatchRunner:
         self.env = env_REGISTRY[self.args.env](**self.args.env_args)
         self.episode_limit = self.env.episode_limit
         self.t = 0
-
         self.t_env = 0
+
+        self.env_info = self.env.get_env_info()
+
+        self.info_scheme = {}
+        self.set_info_scheme()
 
         self.train_returns = []
         self.test_returns = []
@@ -32,12 +39,6 @@ class BatchRunner:
 
     def get_env_info(self):
         return self.env.get_env_info()
-
-    def call_env_function(self, methodname, *args, **kwargs):
-        return getattr(self.env, methodname)(*args, **kwargs)
-
-    def save_replay(self):
-        self.env.save_replay()
 
     def close_env(self):
         self.env.close()
@@ -58,10 +59,13 @@ class BatchRunner:
 
             mask = np.logical_not(terminated)
 
+            pre_info = {key: val[mask] for key, val in self.env.get_info(batch=slice(None)).items()}
+
             pre_transition_data = {
                 "state": self.env.get_state(batch=slice(None))[mask],
                 "avail_actions": self.env.get_avail_actions(batch=slice(None))[mask],
-                "obs": self.env.get_obs(batch=slice(None))[mask]
+                "obs": self.env.get_obs(batch=slice(None))[mask],
+                **pre_info,
             }
 
             self.batch.update(pre_transition_data, bs=mask, ts=self.t)
@@ -71,14 +75,16 @@ class BatchRunner:
             actions = self.mac.select_actions(self.batch, t_ep=self.t, t_env=self.t_env, test_mode=test_mode)
             # Fix memory leak
             cpu_actions = actions.to("cpu").numpy()
-            
-            reward, terminated, env_info = self.env.step(actions)
+
+            self.env.test_mode = test_mode
+            reward, terminated, post_info = self.env.step(actions)
             episode_return += reward
 
             post_transition_data = {
                 "actions": cpu_actions[mask],
                 "reward": reward[mask],
                 "terminated": terminated[mask],
+                **{key: val[mask] for key, val in post_info.items()}
             }
 
             self.batch.update(post_transition_data, bs=mask, ts=self.t)
@@ -88,7 +94,8 @@ class BatchRunner:
         last_data = {
             "state": self.env.get_state(batch=slice(None)),
             "avail_actions": self.env.get_avail_actions(batch=slice(None)),
-            "obs": self.env.get_obs(batch=slice(None))
+            "obs": self.env.get_obs(batch=slice(None)),
+            **self.env.get_info(batch=slice(None)),
         }
         self.batch.update(last_data, ts=self.t)
 
@@ -101,7 +108,7 @@ class BatchRunner:
         cur_stats = self.test_stats if test_mode else self.train_stats
         cur_returns = self.test_returns if test_mode else self.train_returns
         log_prefix = "test_" if test_mode else ""
-        cur_stats.update({k: cur_stats.get(k, 0) + env_info.get(k, 0) for k in set(cur_stats) | set(env_info)})
+        cur_stats.update({k: cur_stats.get(k, 0) + post_info.get(k, 0) for k in set(cur_stats) | set(post_info)})
         cur_stats["n_episodes"] = 1 + cur_stats.get("n_episodes", 0)
         cur_stats["ep_length"] = self.t + cur_stats.get("ep_length", 0)
 
@@ -110,8 +117,9 @@ class BatchRunner:
 
         cur_returns.append(episode_return)
 
-        if test_mode and (len(self.test_returns) == self.args.test_nepisode):
+        if test_mode:
             self._log(cur_returns, cur_stats, log_prefix)
+            self.log_replay()
         elif self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
             self._log(cur_returns, cur_stats, log_prefix)
             if hasattr(self.mac.action_selector, "epsilon"):
@@ -129,3 +137,34 @@ class BatchRunner:
             if k != "n_episodes":
                 self.logger.log_stat(prefix + k + "_mean" , v/stats["n_episodes"], self.t_env)
         stats.clear()
+
+    def log_replay(self):
+        if self.args.save_replay:
+            frame_list = self.env.save_replay()
+            self.logger.log_video(frame_list, t=self.t_env)
+
+
+    def set_info_scheme(self):
+        # self.env.reset()
+        pre_info = self.env.get_info()
+        def add_dict(d):
+            for key, val in d.items():
+                item_scheme = {}
+                if isinstance(val, Data):
+                    x_shape = val.x.shape[1:] if (val.x is not None) else 0
+                    edge_shape = val.edge_attr.shape[1:] if (val.edge_attr is not None) else 0
+                    item_scheme['vshape'] = (x_shape, edge_shape)
+                    item_scheme['dtype'] = Data
+                else:
+                    val = np.array(val)
+                    item_scheme['vshape'] = val.shape[1:]
+                    if len(val.shape) > 0:
+                        if val.shape[0] == self.env_info['n_agents']:
+                            item_scheme['group'] = 'agents'
+                    item_scheme['dtype'] = torch.tensor(np.empty(0, dtype=val.dtype)).dtype
+                self.info_scheme[key] = item_scheme
+        add_dict(pre_info)
+        avail_actions = self.env.get_avail_actions()
+        actions = np.argmax(avail_actions, axis=-1)
+        reward, done, post_info = self.env.step(actions)
+        add_dict(post_info)

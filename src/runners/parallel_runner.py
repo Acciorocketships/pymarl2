@@ -58,22 +58,6 @@ class ParallelRunner:
     def get_env_info(self):
         return self.env_info
 
-    def call_env_func(self, methodname, *args, **kwargs):
-        # define new methods in env_worker
-        if len(args) > 0:
-            if len(args) == 1:
-                self.parent_conns[0].send((methodname, args[0]))
-            else:
-                self.parent_conns[0].send((methodname, args))
-        elif len(kwargs) > 0:
-            self.parent_conns[0].send((methodname, kwargs))
-        else:
-            self.parent_conns[0].send((methodname, None))
-        return self.parent_conns[0].recv()
-
-    def save_replay(self):
-        pass
-
     def close_env(self):
         for parent_conn in self.parent_conns:
             parent_conn.send(("close", None))

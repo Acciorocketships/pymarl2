@@ -1,5 +1,6 @@
 from collections import defaultdict
 import logging
+import wandb
 import numpy as np
 import torch as th
 
@@ -8,8 +9,7 @@ class Logger:
         self.console_logger = console_logger
 
         self.use_tb = False
-        self.use_sacred = False
-        self.use_hdf = False
+        self.use_wandb = False
 
         self.stats = defaultdict(lambda: [])
 
@@ -20,25 +20,40 @@ class Logger:
         self.tb_logger = log_value
         self.use_tb = True
 
-    def setup_sacred(self, sacred_run_dict):
-        self.sacred_info = sacred_run_dict.info
-        self._run = sacred_run_dict
-        self.use_sacred = True
+    def setup_wandb(self, args):
+        self.use_wandb = True
+        if isinstance(args.wandb_project, str):
+            project_name = args.wandb_project
+        else:
+            project_name = args.env + "-" + args.env_args["map_name"]
+        if isinstance(args.wandb, str):
+            group_name = args.wandb
+        else:
+            group_name = args.name
+        config = args.__dict__.copy()
+        config.update(config["env_args"])
+        del config["env_args"]
+        wandb.init(
+            entity=args.wandb_user,
+            project=project_name,
+            group=group_name,
+            config=config,
+        )
 
-    def log_stat(self, key, value, t, to_sacred=True):
+    def log_stat(self, key, value, t):
         self.stats[key].append((t, value))
 
         if self.use_tb:
             self.tb_logger(key, value, t)
 
-        if self.use_sacred and to_sacred:
-            self._run.log_scalar(key, value, step=t)
-            if key in self.sacred_info:
-                self.sacred_info["{}_T".format(key)].append(t)
-                self.sacred_info[key].append(value)
-            else:
-                self.sacred_info["{}_T".format(key)] = [t]
-                self.sacred_info[key] = [value]
+        if self.use_wandb:
+            wandb.log({key: value}, step=t, commit=False)
+
+    def log_video(self, video, t, name="visualisation"):
+        if self.use_wandb:
+            vid_seq = np.transpose(video, (0, 3, 1, 2)) # from (time x height x width x channel) to (time x channel x height x width)
+            wandb_video = wandb.Video(vid_seq, fps=30, format="mp4")
+            wandb.log({name: wandb_video}, step=t)
 
     def print_recent_stats(self):
         log_str = "Recent Stats | t_env: {:>10} | Episode: {:>8}\n".format(*self.stats["episode"][-1])

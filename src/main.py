@@ -20,12 +20,6 @@ ex = Experiment("pymarl")
 ex.logger = logger
 ex.captured_out_filter = apply_backspaces_and_linefeeds
 
-from neptunecontrib.monitoring.sacred import NeptuneObserver
-ex.observers.append(NeptuneObserver(
-	project_name="ProrokLab/QGNN",
-    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI1NTJmOTJhZi05MmM3LTQ0MTctYjY5NS00MGU3MDE1MWE5NjgifQ==",
-	))
-
 results_path = join(dirname(dirname(abspath(__file__))), "results")
 
 
@@ -35,7 +29,9 @@ def my_main(_run, _config, _log):
 	config = config_copy(_config)
 	np.random.seed(config["seed"])
 	th.manual_seed(config["seed"])
-	config['env_args']['seed'] = config["seed"]
+	# config['env_args']['seed'] = config["seed"]
+	config['env_args']['save_replay'] = config["save_replay"]
+	config['env_args']['render'] = config["render"]
 	
 	# run
 	if "use_per" in _config and _config["use_per"]:
