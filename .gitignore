@@ -7,3 +7,5 @@ results/
 .DS_Store
 src/main.py
 *.egg-info/
+.idea/*
+wandb/*
