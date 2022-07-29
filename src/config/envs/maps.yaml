@@ -5,7 +5,7 @@ env_args:
   batch_size: 16
   device: "cpu"
   continuous: False
-  max_steps: 1000
+  max_steps: 500
 
 test_greedy: True
 test_nepisode: 1
@@ -14,8 +14,10 @@ log_interval: 1000
 runner_log_interval: 1000
 learner_log_interval: 1000
 t_max: 1000000
+epsilon_anneal_time: 100000
 
 save_replay: True
+wandb: True
 
 obs_agent_id: False
 obs_last_action: False
