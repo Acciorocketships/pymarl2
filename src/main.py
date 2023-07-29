@@ -29,7 +29,8 @@ def my_main(_run, _config, _log):
 	config = config_copy(_config)
 	np.random.seed(config["seed"])
 	th.manual_seed(config["seed"])
-	# config['env_args']['seed'] = config["seed"]
+	config['env_args']['seed'] = config["seed"]
+	config['env_args']['num_envs'] = config["batch_size_run"]
 	config['env_args']['save_replay'] = config["save_replay"]
 	config['env_args']['render'] = config["render"]
 	

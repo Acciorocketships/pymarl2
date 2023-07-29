@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 from PIL import Image
-from maps import make_env
+from vmas import make_env
 
-class MapsWrapper(object):
+class VmasWrapper(object):
 
     def __init__(self, env, render=False, save_replay=False):
         self.env = env
@@ -109,12 +109,11 @@ class MapsWrapper(object):
 
 
 
-def get_maps_env(**kwargs):
+def get_vmas_env(**kwargs):
     def delete(dictionary, key):
         if key in dictionary:
             del dictionary[key]
     map_name = kwargs.get("map_name", None)
-    batch_size = kwargs.get("batch_size", 1)
     device = kwargs.get("device", "cpu")
     continuous = kwargs.get("continuous", False)
     save_replay = kwargs.get("save_replay", False)
@@ -122,19 +121,17 @@ def get_maps_env(**kwargs):
     assert map_name is not None, "must specify env_args.map_name"
     env_kwargs = kwargs.copy()
     delete(env_kwargs, "map_name")
-    delete(env_kwargs, "batch_size")
     delete(env_kwargs, "device")
     delete(env_kwargs, "continuous")
     delete(env_kwargs, "save_replay")
     delete(env_kwargs, "render")
     env = make_env(
         map_name,
-        num_envs=batch_size,
         device=device,
         continuous_actions=continuous,
         rllib_wrapped=False,
         # Environment specific variables
         **env_kwargs,
     )
-    wrapped_env = MapsWrapper(env, render=render, save_replay=save_replay)
+    wrapped_env = VmasWrapper(env, render=render, save_replay=save_replay)
     return wrapped_env

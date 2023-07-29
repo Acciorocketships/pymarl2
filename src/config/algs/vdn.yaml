@@ -31,4 +31,4 @@ td_lambda: 0.6
 optimizer: 'adam'
 q_lambda: False
 
-name: "vdn_env=8_adam_td_lambda"
+name: "vdn"

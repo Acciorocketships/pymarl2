@@ -3,6 +3,7 @@ from pymarl.components.episode_buffer import EpisodeBatch
 from pymarl.modules.mixers.vdn import VDNMixer
 from pymarl.modules.mixers.qmix import QMixer
 from pymarl.modules.mixers.graphmix import GraphMixer
+from pymarl.callbacks.callback import Callback
 import torch as th
 from torch.optim import RMSprop
 
@@ -11,6 +12,7 @@ class QLearner:
         self.args = args
         self.mac = mac
         self.logger = logger
+        self.callback = callback
 
         self.params = list(mac.parameters())
 
@@ -91,7 +93,7 @@ class QLearner:
             chosen_action_qvals_peragent = chosen_action_qvals.clone()
             target_max_qvals_peragent = target_max_qvals.detach()
 
-            chosen_action_qvals, local_rewards, alive_agents_mask = self.mixer(chosen_action_qvals,
+            global_qvals, local_rewards, alive_agents_mask = self.mixer(chosen_action_qvals,
                                                                                batch["state"][:, :-1],
                                                                                agent_obs=batch["obs"][:, :-1],
                                                                                team_rewards=rewards,
@@ -109,7 +111,7 @@ class QLearner:
             targets = rewards + self.args.gamma * (1 - terminated) * target_max_qvals
 
             # Td-error
-            td_error = (chosen_action_qvals - targets.detach())
+            td_error = (global_qvals - targets.detach())
 
             mask = mask.expand_as(td_error)
 
@@ -141,14 +143,14 @@ class QLearner:
         else:
             # Mix
             if self.mixer is not None:
-                chosen_action_qvals = self.mixer(chosen_action_qvals, batch["state"][:, :-1])
+                global_qvals = self.mixer(chosen_action_qvals, batch["state"][:, :-1])
                 target_max_qvals = self.target_mixer(target_max_qvals, batch["state"][:, 1:])
 
             # Calculate 1-step Q-Learning targets
             targets = rewards + self.args.gamma * (1 - terminated) * target_max_qvals
 
             # Td-error
-            td_error = (chosen_action_qvals - targets.detach())
+            td_error = (global_qvals - targets.detach())
 
             mask = mask.expand_as(td_error)
 
@@ -178,9 +180,19 @@ class QLearner:
             self.logger.log_stat("grad_norm", grad_norm, t_env)
             mask_elems = mask.sum().item()
             self.logger.log_stat("td_error_abs", (masked_td_error.abs().sum().item()/mask_elems), t_env)
-            self.logger.log_stat("q_taken_mean", (chosen_action_qvals * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
+            self.logger.log_stat("q_taken_mean", (global_qvals * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
             self.logger.log_stat("target_mean", (targets * mask).sum().item()/(mask_elems * self.args.n_agents), t_env)
             self.log_stats_t = t_env
+
+            if type(self.callback).metrics != Callback.metrics:
+                model_data = {
+                    "local_q_all": mac_out.detach(),
+                    "local_q_chosen": chosen_action_qvals.detach(),
+                    "global_q": global_qvals.detach(),
+                }
+                metrics = self.callback.metrics(env_data=batch, model_data=model_data)
+                for key, val in metrics.items():
+                    self.logger.log_stat(key, val, t_env)
             
     def _update_targets(self):
         self.target_mac.load_state(self.mac)

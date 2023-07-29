@@ -1,8 +1,7 @@
-env: maps
+env: vmas
 
 env_args:
   map_name: null
-  batch_size: 16
   device: "cpu"
   continuous: False
   max_steps: 500
@@ -22,3 +21,5 @@ wandb: True
 obs_agent_id: False
 obs_last_action: False
 rnn_hidden_dim: 8
+
+runner: "batch"

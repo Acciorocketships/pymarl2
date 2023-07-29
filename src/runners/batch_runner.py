@@ -12,7 +12,7 @@ class BatchRunner:
     def __init__(self, args, logger):
         self.args = args
         self.logger = logger
-        self.batch_size = self.args.env_args.get('batch_size', 1)
+        self.batch_size = self.args.batch_size_run
 
         self.env = env_REGISTRY[self.args.env](**self.args.env_args)
         self.episode_limit = self.env.episode_limit

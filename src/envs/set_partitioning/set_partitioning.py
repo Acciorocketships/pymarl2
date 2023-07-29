@@ -29,6 +29,8 @@ class SetPartitioning(MultiAgentEnv):
 
 		# Internal Params
 
+		self.seed = kwargs.get("seed", 0)
+		self.num_envs = kwargs.get("num_envs", 1)
 		self.reset_counter = 0
 
 		self.reward_mat_dist = Gamma(2.0*torch.ones((self.batch_size,self.n_agents,self.n_actions)),
@@ -97,7 +99,7 @@ class SetPartitioning(MultiAgentEnv):
 		if self.reset_characteristic or self.reward_mat is None:
 			if self.reset_characteristic:
 				rng_state = torch.get_rng_state()
-				torch.random.manual_seed(self.reset_counter)
+				torch.random.manual_seed(self.reset_counter * self.num_envs + self.seed)
 				self.reward_mat = self.reward_mat_dist.sample().numpy()
 				torch.set_rng_state(rng_state)
 				self.reset_counter += 1
@@ -153,6 +155,9 @@ class SetPartitioning(MultiAgentEnv):
 
 	def save_replay(self):
 		pass
+
+	def get_stats(self):
+		return None
 
 
 if __name__ == '__main__':

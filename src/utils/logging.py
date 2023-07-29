@@ -61,6 +61,8 @@ class Logger:
         for (k, v) in sorted(self.stats.items()):
             if k == "episode":
                 continue
+            if isinstance(v[0][1], np.ndarray) or isinstance(v[0][1], th.Tensor):
+                continue
             i += 1
             window = 5 if k != "epsilon" else 1
             item = "{:.4f}".format(th.mean(th.tensor([float(x[1]) for x in self.stats[k][-window:]])))

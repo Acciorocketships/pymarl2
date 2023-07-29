@@ -1,11 +1,9 @@
-import torch
-
 from pymarl.envs import REGISTRY as env_REGISTRY
 from functools import partial
 from pymarl.components.episode_buffer import EpisodeBatch
 from multiprocessing import Pipe, Process
 import numpy as np
-import torch as th
+import torch
 from torch_geometric.data import Data
 
 
@@ -23,8 +21,11 @@ class ParallelInfoRunner:
         env_fn = env_REGISTRY[self.args.env]
         self.ps = []
         for i, worker_conn in enumerate(self.worker_conns):
+            env_args = self.args.env_args.copy()
+            if "seed" in env_args:
+                env_args["seed"] += i
             ps = Process(target=env_worker, 
-                    args=(worker_conn, CloudpickleWrapper(partial(env_fn, **self.args.env_args))))
+                    args=(worker_conn, CloudpickleWrapper(partial(env_fn, **env_args))))
             self.ps.append(ps)
 
         for p in self.ps:
@@ -32,7 +33,7 @@ class ParallelInfoRunner:
             p.start()
             np_rand, torch_rand = np.random.randint(4e9, size=(2,))
             np.random.seed(np_rand)
-            th.manual_seed(torch_rand)
+            torch.manual_seed(torch_rand)
 
         self.parent_conns[0].send(("get_env_info", None))
         self.env_info = self.parent_conns[0].recv()
@@ -286,7 +287,7 @@ def env_worker(remote, env_fn):
             cmd, data, reset_state = recv
         if reset_state:
             np_rand_state = np.random.get_state()
-            torch_rand_state = th.random.get_rng_state()
+            torch_rand_state = torch.random.get_rng_state()
         if cmd == "step":
             actions = data
             # Take a step in the environment
@@ -334,12 +335,10 @@ def env_worker(remote, env_fn):
                 remote.send(getattr(env, cmd)(data))
         if reset_state:
             np.random.set_state(np_rand_state)
-            th.random.set_rng_state(torch_rand_state)
-
+            torch.random.set_rng_state(torch_rand_state)
 
 def numpy_to_torch_dtype(dtype):
-    return th.tensor(np.empty(0, dtype=dtype)).dtype
-
+    return torch.tensor(np.empty(0, dtype=dtype)).dtype
 
 class CloudpickleWrapper():
     """

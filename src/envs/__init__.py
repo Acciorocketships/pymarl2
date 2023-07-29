@@ -7,12 +7,20 @@ from .stag_hunt import StagHunt
 from .matrix_game import OneStepMatrixGame
 from .estimate_game import EstimateGame
 from .set_partitioning import SetPartitioning
-from pymarl.envs.maps_wrapper import get_maps_env
+
+try:
+    vmasenv = True
+    from pymarl.envs.vmas_wrapper import get_vmas_env
+except Exception as e:
+    print(e)
+    vmasenv = False
+
 
 try:
     starcraftenv = True
     from .starcraft import StarCraft2Env
-except:
+except Exception as e:
+    print(e)
     starcraftenv = False
 
 try:
@@ -29,7 +37,9 @@ REGISTRY["set"] = partial(env_fn, env=SetPartitioning)
 REGISTRY["estimate"] = partial(env_fn, env=EstimateGame)
 REGISTRY["stag_hunt"] = partial(env_fn, env=StagHunt)
 REGISTRY["one_step_matrix_game"] = partial(env_fn, env=OneStepMatrixGame)
-REGISTRY["maps"] = get_maps_env
+
+if vmasenv:
+    REGISTRY["vmas"] = get_vmas_env
 
 if starcraftenv:
     REGISTRY["sc2"] = partial(env_fn, env=StarCraft2Env)

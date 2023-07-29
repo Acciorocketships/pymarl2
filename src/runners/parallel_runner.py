@@ -21,13 +21,19 @@ class ParallelRunner:
         env_fn = env_REGISTRY[self.args.env]
         self.ps = []
         for i, worker_conn in enumerate(self.worker_conns):
-            ps = Process(target=env_worker, 
-                    args=(worker_conn, CloudpickleWrapper(partial(env_fn, **self.args.env_args))))
+            env_args = self.args.env_args.copy()
+            if "seed" in env_args:
+                env_args["seed"] += i
+            ps = Process(target=env_worker,
+                    args=(worker_conn, CloudpickleWrapper(partial(env_fn, **env_args))))
             self.ps.append(ps)
 
         for p in self.ps:
             p.daemon = True
             p.start()
+            np_rand, torch_rand = np.random.randint(4e9, size=(2,))
+            np.random.seed(np_rand)
+            torch.manual_seed(torch_rand)
 
         self.parent_conns[0].send(("get_env_info", None))
         self.env_info = self.parent_conns[0].recv()
@@ -48,12 +54,12 @@ class ParallelRunner:
         self.log_train_stats_t = -100000
 
     def setup(self, scheme, groups, preprocess, mac):
-        self.new_batch = partial(EpisodeBatch, scheme, groups, self.batch_size, self.episode_limit + 1,
-                                 preprocess=preprocess, device=self.args.device)
         self.mac = mac
         self.scheme = scheme
         self.groups = groups
         self.preprocess = preprocess
+        self.new_batch = partial(EpisodeBatch, scheme, groups, self.batch_size, self.episode_limit + 1,
+                                 preprocess=preprocess, device=self.args.device)
 
     def get_env_info(self):
         return self.env_info
@@ -72,7 +78,7 @@ class ParallelRunner:
         pre_transition_data = {
             "state": [],
             "avail_actions": [],
-            "obs": []
+            "obs": [],
         }
         # Get the obs, state and avail_actions back
         for parent_conn in self.parent_conns:
@@ -142,10 +148,12 @@ class ParallelRunner:
             pre_transition_data = {
                 "state": [],
                 "avail_actions": [],
-                "obs": []
+                "obs": [],
             }
 
             # Receive data back for each unterminated env
+            post_infos = {}
+            contains_info = [False] * len(self.parent_conns)
             for idx, parent_conn in enumerate(self.parent_conns):
                 if not terminated[idx]:
                     data = parent_conn.recv()
@@ -159,13 +167,16 @@ class ParallelRunner:
 
                     env_terminated = False
                     if data["terminated"]:
-                        post_info_scalars = {key: val for (key, val) in data["post_info"].items() if np.array(val).size == 1}
+                        post_info_scalars = {key: val for (key,val) in data["post_info"].items() if np.array(val).size==1}
                         final_post_infos.append(post_info_scalars)
                     if data["terminated"] and not data["post_info"].get("episode_limit", False):
                         env_terminated = True
                     terminated[idx] = data["terminated"]
                     post_transition_data["terminated"].append((env_terminated,))
-                    self.add_info(post_transition_data, data["post_info"])
+                    if len(data["post_info"]) > 0:
+                        self.add_info(post_infos, data["post_info"])
+                        contains_info[idx] = True
+                    # self.add_info(post_transition_data, data["post_info"])
 
                     # Data for the next timestep needed to select an action
                     pre_transition_data["state"].append(data["state"])
@@ -174,6 +185,8 @@ class ParallelRunner:
                     self.add_info(pre_transition_data, data["info"])
 
             # Add post_transiton data into the batch
+            self.batch.update(post_infos, bs=contains_info, ts=self.t, mark_filled=False)
+
             self.batch.update(post_transition_data, bs=envs_not_terminated, ts=self.t, mark_filled=False)
 
             # Move onto the next timestep
@@ -225,6 +238,7 @@ class ParallelRunner:
             if k != "n_episodes":
                 self.logger.log_stat(prefix + k + "_mean" , v/stats["n_episodes"], self.t_env)
         stats.clear()
+
 
     def add_info(self, data, info):
         for key, val in info.items():
